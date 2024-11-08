@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package shared;
+option go_package = "ms/gateway/pb";
+
+message pagination {
+    int32 page = 1;
+    int32 limit = 2;
+    int64 count = 3;
+}
+
+message EmptyBody {}
