@@ -2,10 +2,14 @@ import { Module } from '@nestjs/common';
 import { ProductsModule } from './products/products.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HealthModule } from './health/health.module';
+import { ConsulModule } from './consul/consul.module';
 
 @Module({
   imports: [
     ProductsModule, 
+    HealthModule,
+    ConsulModule,
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type:"mysql",

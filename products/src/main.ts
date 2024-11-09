@@ -8,10 +8,8 @@ async function bootstrap() {
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.GRPC,
       options: {
-        // as inside the proto file name
-        // watches only applies to folders & files inside "src" folder
-        package: 'products',
-        protoPath: join(__dirname, '../../../common/protos/products.proto'),
+        package: ['products','grpc.health.v1'],
+        protoPath: [join(__dirname, '../../../common/protos/products.proto'),join(__dirname, '../../../common/protos/health.proto')],
         url:"localhost:3001"
       },
     });

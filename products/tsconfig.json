@@ -21,5 +21,6 @@
     "paths": {
       "@common-ts/*":["../common/common-ts/*", "../common/common-ts/"]
     },
+    "esModuleInterop": true
   }
 }

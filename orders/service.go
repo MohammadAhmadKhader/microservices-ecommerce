@@ -3,20 +3,35 @@ package main
 import (
 	"context"
 	"ms/common/common-go"
+	"ms/orders/gateway"
 	pb "ms/orders/generated"
 	"ms/orders/models"
 )
 
 type service struct {
+	productsGateway *gateway.Gateway
 	store OrdersStore
 }
 
-func NewService(store OrdersStore) *service {
-	return &service{store: store}
+func NewService(store OrdersStore, productsGateway *gateway.Gateway) *service {
+	return &service{
+		store: store,
+		productsGateway: productsGateway,
+	}
 }
 
 func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
-	err := s.ValidateOrder(p)
+	var productIds = []int32{}
+	for _, item := range p.Items {
+		productIds = append(productIds, item.ID)
+	}
+
+	_, err := s.productsGateway.GetProductsFromIds(ctx, productIds)
+	if err != nil {
+		return nil, err
+	}
+	
+	err = s.ValidateOrder(p)
 	if err != nil {
 		return nil, err
 	}

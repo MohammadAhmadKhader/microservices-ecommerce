@@ -4,7 +4,7 @@ generate:
 	--proto_path =../common/protos \
     ../common/protos/products.proto \
 	../common/protos/orders.proto \
-	../common/protos/shared.proto \
+	../common/protos/shared.proto 
 
 run:
 	@go run ./main.go
