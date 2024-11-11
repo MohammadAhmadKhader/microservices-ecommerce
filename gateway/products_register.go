@@ -16,7 +16,7 @@ func (h *handler) productsRegister(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/products/{productId}", h.HandleGettingProductById)
 	mux.HandleFunc("POST /api/products", h.HandleCreateProduct)
 	mux.HandleFunc("PUT /api/products/{productId}", h.HandleUpdateProduct)
-	mux.HandleFunc("DELETE /api/products", h.HandleDeleteProduct)
+	mux.HandleFunc("DELETE /api/products", h.HandleDeleteOneProduct)
 }
 
 func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +28,8 @@ func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Reques
 		common.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
-	// this send the items to grpc
-	product, err := h.productsClient.FindOne(r.Context(), &pb.Id{
+
+	product, err := h.productsGateway.FindOne(r.Context(), &pb.Id{
 		Id: int32(productId),
 	})
 
@@ -49,7 +49,7 @@ func (h *handler) HandleGettingAllProducts(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	findAllResp, err := h.productsClient.Find(r.Context(), &pb.FindAll{
+	findAllResp, err := h.productsGateway.Find(r.Context(), &pb.FindAll{
 		Page:  page,
 		Limit: limit,
 	})
@@ -75,7 +75,7 @@ func (h *handler) HandleCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	product, err := h.productsClient.Create(r.Context(), &createPayload)
+	product, err := h.productsGateway.Create(r.Context(), &createPayload)
 	if err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -91,8 +91,8 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	// this send the items to grpc
-	product, err := h.productsClient.Update(r.Context(), &updateProduct)
+	
+	product, err := h.productsGateway.Update(r.Context(), &updateProduct)
 	if err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -101,7 +101,7 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	common.WriteJSON(w, http.StatusAccepted, map[string]any{"product": product})
 }
 
-func (h *handler) HandleDeleteProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) HandleDeleteOneProduct(w http.ResponseWriter, r *http.Request) {
 	productIdAsStr := r.PathValue("productId")
 	productId, err := strconv.Atoi(productIdAsStr)
 	if err != nil {
@@ -109,8 +109,8 @@ func (h *handler) HandleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
-	// this send the items to grpc
-	_, err = h.productsClient.DeleteOne(r.Context(), &pb.Id{Id: int32(productId)})
+	
+	_, err = h.productsGateway.DeleteOne(r.Context(), &pb.Id{Id: int32(productId)})
 	if err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return

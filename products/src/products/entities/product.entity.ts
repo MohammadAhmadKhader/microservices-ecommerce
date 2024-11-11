@@ -1,4 +1,5 @@
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
+import { toProtobufTimestamp } from 'src/common-ts/utils';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
@@ -49,9 +50,7 @@ export class ProductProtobuf {
         this.price = product.price
         this.quantity = product.quantity
         this.categoryId = product.categoryId
-        //console.log(this.createdAt,"before")
-        //this.createdAt = toProtobufTimestamp(product.createdAt)
-        //this.updatedAt = toProtobufTimestamp(product.updatedAt)
-        //console.log(this.createdAt,"after")
+        this.createdAt = toProtobufTimestamp(product.createdAt)
+        this.updatedAt = toProtobufTimestamp(product.updatedAt)
     }
 }

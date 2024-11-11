@@ -13,7 +13,8 @@ async function bootstrap() {
         url:"localhost:3001"
       },
     });
-    
+
+    app.enableShutdownHooks()
     await app.listen()
     
     console.log("Javascript microservice connected at 3001")

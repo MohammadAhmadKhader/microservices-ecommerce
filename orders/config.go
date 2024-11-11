@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/joho/godotenv"
 )
 
@@ -48,6 +49,7 @@ func getEnv(key, fallbackValue string) string {
 	if envs[key] != "" {
 		return envs[key]
 	}
+
 	return fallbackValue
 }
 

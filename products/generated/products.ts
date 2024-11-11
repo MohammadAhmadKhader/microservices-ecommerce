@@ -55,6 +55,14 @@ export interface UpdateProduct {
   categoryId: number;
 }
 
+export interface FindProductsByIdsRequest {
+  Ids: number[];
+}
+
+export interface FindProductsByIdsResponse {
+  products: Product[];
+}
+
 function createBaseProduct(): Product {
   return {
     id: 0,
@@ -742,12 +750,143 @@ export const UpdateProduct: MessageFns<UpdateProduct> = {
   },
 };
 
+function createBaseFindProductsByIdsRequest(): FindProductsByIdsRequest {
+  return { Ids: [] };
+}
+
+export const FindProductsByIdsRequest: MessageFns<FindProductsByIdsRequest> = {
+  encode(message: FindProductsByIdsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    writer.uint32(10).fork();
+    for (const v of message.Ids) {
+      writer.int32(v);
+    }
+    writer.join();
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FindProductsByIdsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFindProductsByIdsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag === 8) {
+            message.Ids.push(reader.int32());
+
+            continue;
+          }
+
+          if (tag === 10) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.Ids.push(reader.int32());
+            }
+
+            continue;
+          }
+
+          break;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FindProductsByIdsRequest {
+    return { Ids: globalThis.Array.isArray(object?.Ids) ? object.Ids.map((e: any) => globalThis.Number(e)) : [] };
+  },
+
+  toJSON(message: FindProductsByIdsRequest): unknown {
+    const obj: any = {};
+    if (message.Ids?.length) {
+      obj.Ids = message.Ids.map((e) => Math.round(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FindProductsByIdsRequest>, I>>(base?: I): FindProductsByIdsRequest {
+    return FindProductsByIdsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FindProductsByIdsRequest>, I>>(object: I): FindProductsByIdsRequest {
+    const message = createBaseFindProductsByIdsRequest();
+    message.Ids = object.Ids?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseFindProductsByIdsResponse(): FindProductsByIdsResponse {
+  return { products: [] };
+}
+
+export const FindProductsByIdsResponse: MessageFns<FindProductsByIdsResponse> = {
+  encode(message: FindProductsByIdsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.products) {
+      Product.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FindProductsByIdsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFindProductsByIdsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.products.push(Product.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FindProductsByIdsResponse {
+    return {
+      products: globalThis.Array.isArray(object?.products) ? object.products.map((e: any) => Product.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: FindProductsByIdsResponse): unknown {
+    const obj: any = {};
+    if (message.products?.length) {
+      obj.products = message.products.map((e) => Product.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FindProductsByIdsResponse>, I>>(base?: I): FindProductsByIdsResponse {
+    return FindProductsByIdsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FindProductsByIdsResponse>, I>>(object: I): FindProductsByIdsResponse {
+    const message = createBaseFindProductsByIdsResponse();
+    message.products = object.products?.map((e) => Product.fromPartial(e)) || [];
+    return message;
+  },
+};
+
 export interface ProductsService {
   FindOne(request: Id): Promise<Product>;
   Create(request: CreateProduct): Promise<Product>;
   Update(request: UpdateProduct): Promise<Product>;
   Find(request: FindAll): Promise<FindAllResponse>;
   DeleteOne(request: Id): Promise<EmptyBody>;
+  FindProductsByIds(request: FindProductsByIdsRequest): Promise<FindProductsByIdsResponse>;
 }
 
 export const ProductsServiceServiceName = "products.ProductsService";
@@ -762,6 +901,7 @@ export class ProductsServiceClientImpl implements ProductsService {
     this.Update = this.Update.bind(this);
     this.Find = this.Find.bind(this);
     this.DeleteOne = this.DeleteOne.bind(this);
+    this.FindProductsByIds = this.FindProductsByIds.bind(this);
   }
   FindOne(request: Id): Promise<Product> {
     const data = Id.encode(request).finish();
@@ -791,6 +931,12 @@ export class ProductsServiceClientImpl implements ProductsService {
     const data = Id.encode(request).finish();
     const promise = this.rpc.request(this.service, "DeleteOne", data);
     return promise.then((data) => EmptyBody.decode(new BinaryReader(data)));
+  }
+
+  FindProductsByIds(request: FindProductsByIdsRequest): Promise<FindProductsByIdsResponse> {
+    const data = FindProductsByIdsRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "FindProductsByIds", data);
+    return promise.then((data) => FindProductsByIdsResponse.decode(new BinaryReader(data)));
   }
 }
 

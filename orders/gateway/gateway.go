@@ -2,18 +2,25 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 	"log"
-	
+
 	"ms/common/common-go/discovery"
 	pb "ms/orders/generated"
-	"sync"
+	"ms/orders/utils"
 )
 
 type Gateway struct {
 	registry discovery.ServiceRegistry
 }
 
-func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) ([]pb.Product, error) {
+func NewGateway(registry *discovery.Registry) *Gateway {
+	return &Gateway{
+		registry: registry,
+	}
+}
+
+func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) ([]*pb.Product, error) {
 	conn, err := discovery.ConnectService(ctx, "products", g.registry)
 	if err != nil {
 		log.Fatal("an error has ocurred during connection with products service: ", err)
@@ -22,30 +29,16 @@ func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) (
 
 	productsService := pb.NewProductsServiceClient(conn)
 
-	var mu sync.Mutex
-	var products = []pb.Product{}
-	for _, productId := range productsIds {
-		// ! must be changed to one single query fetch
-		prod, err := productsService.FindOne(ctx, &pb.Id{Id: productId})
-		if err != nil {
-			
-			return nil, err
-		}
-
-		if prod == nil {
-			log.Printf("product with id: '%v' was not found during order creation",prod.Id)
-			return nil, err
-		}
-		mu.Lock()
-		products = append(products, *prod)
-		mu.Unlock()
+	resp, err := productsService.FindProductsByIds(ctx, &pb.FindProductsByIdsRequest{Ids: productsIds})
+	if err != nil {
+		return nil, err
 	}
 
-	return products, nil
-}
+	if len(resp.Products) != len(productsIds) {
+		idsStr := utils.GetUnmatchedIds(productsIds, resp.Products)
 
-func NewGateway(registry *discovery.Registry) *Gateway {
-	return &Gateway{
-		registry: registry,
+		return nil, fmt.Errorf("order was not able to be created, products with the following ids: '%s' were not found", idsStr)
 	}
+
+	return resp.Products, nil
 }

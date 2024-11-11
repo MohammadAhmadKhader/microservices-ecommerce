@@ -2,20 +2,21 @@ package main
 
 import (
 	"context"
-	"ms/common/common-go"
+
 	"ms/orders/gateway"
 	pb "ms/orders/generated"
 	"ms/orders/models"
+	"ms/orders/utils"
 )
 
 type service struct {
 	productsGateway *gateway.Gateway
-	store OrdersStore
+	store           OrdersStore
 }
 
 func NewService(store OrdersStore, productsGateway *gateway.Gateway) *service {
 	return &service{
-		store: store,
+		store:           store,
 		productsGateway: productsGateway,
 	}
 }
@@ -30,8 +31,8 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 	if err != nil {
 		return nil, err
 	}
-	
-	err = s.ValidateOrder(p)
+
+	err = utils.ValidateOrder(p)
 	if err != nil {
 		return nil, err
 	}
@@ -92,21 +93,4 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	protoOrder := order.ToProto()
 
 	return protoOrder, nil
-}
-
-func (s *service) ValidateOrder(pb *pb.CreateOrderRequest) error {
-	if len(pb.Items) == 0 {
-		return common.ErrNoItems
-	}
-
-	return nil
-}
-
-func (s *service) CollectProductsIds(pb *pb.CreateOrderRequest) []int {
-	var productsIds []int
-	for _, item := range pb.Items {
-		productsIds = append(productsIds, int(item.ID))
-	}
-
-	return productsIds
 }

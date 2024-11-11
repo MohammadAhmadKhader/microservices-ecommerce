@@ -3,8 +3,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product, ProductProtobuf } from './entities/product.entity';
-import { Repository } from 'typeorm';
-import { FindAllResponse } from '../../generated/products';
+import { In, Repository } from 'typeorm';
+import { FindAllResponse, FindProductsByIdsResponse } from '../../generated/products';
 
 @Injectable()
 export class ProductsService {
@@ -38,6 +38,20 @@ export class ProductsService {
    
     const productResponse = product!.ConvertToProtobufType()
     return productResponse as any;
+  }
+
+  async findProductsByIds(Ids: number[]): Promise<FindProductsByIdsResponse> {
+    const products = await this.productRepository.find({
+      where :{
+        id : In(Ids)
+      }
+    })
+
+    const protobufsProducts = products.map((prod)=>{
+      return prod.ConvertToProtobufType()
+    }) 
+
+    return {products: protobufsProducts as unknown as Product[]}
   }
 
   async update(id: number, updateProductDto: Partial<UpdateProductDto>) : Promise<Product> {

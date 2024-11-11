@@ -6,6 +6,8 @@ import (
 	"ms/gateway/cookie"
 	pb "ms/gateway/generated"
 	"net/http"
+
+	"google.golang.org/grpc/status"
 )
 
 // auth
@@ -23,10 +25,11 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginResponse, err := h.authClient.Login(context.Background(),
+	loginResponse, err := h.authGateway.Login(context.Background(),
 		&pb.LoginRequest{Email: loginPayload.Email, Password: loginPayload.Password})
-	if err != nil {
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
@@ -47,7 +50,7 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginResponse, err := h.authClient.Regist(context.Background(),
+	loginResponse, err := h.authGateway.Register(context.Background(),
 		&pb.RegistRequest{
 			FirstName: registPayload.FirstName, LastName: registPayload.LastName,
 			Email: registPayload.Email, Password: registPayload.Password,

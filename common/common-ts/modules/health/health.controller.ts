@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod, Payload } from '@nestjs/microservices';
+import { GrpcMethod } from '@nestjs/microservices';
 import { HealthCheckRequest, HealthCheckResponse, HealthCheckResponse_ServingStatus } from 'generated/health';
 
 const HealthService = "Health"
@@ -10,7 +10,7 @@ export class HealthController {
 
   @GrpcMethod(HealthService, "Check")
   check(req: HealthCheckRequest): HealthCheckResponse {
-    console.log("health checking", req)
+    console.log("health checking")
     return { status:HealthCheckResponse_ServingStatus.SERVING};
   }
 }

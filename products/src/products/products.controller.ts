@@ -20,6 +20,12 @@ export class ProductsController {
     return this.productsService.findAll(data.page, data.limit);
   }
 
+  @GrpcMethod(ProductService, "FindProductsByIds")
+  findProductsByIds(data:{Ids: number[]}) {
+    console.log(data)
+    return this.productsService.findProductsByIds(data.Ids);
+  }
+
   @GrpcMethod(ProductService, "FindOne")
   findOne(data:{id :number}) {
     return this.productsService.findOne(data.id);

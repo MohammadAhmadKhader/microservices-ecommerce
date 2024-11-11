@@ -8,7 +8,6 @@ import (
 	"ms/common/common-go/discovery"
 	"ms/orders/gateway"
 	"net"
-	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
@@ -35,28 +34,12 @@ func main() {
 		amqpChan.Close()
 	}()
 
-	registry, err := discovery.NewRegistry("localhost:8500")
+	ctx := context.Background()
+
+	registry, instanceId, err:= discovery.InitRegistryAndHandleIt(ctx, serviceName, grpcAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	ctx := context.Background()
-	instanceId := discovery.GenInstanceId(serviceName)
-
-	err = registry.Register(ctx, instanceId, grpcAddr, serviceName)
-	if err != nil {
-		log.Println(err)
-	}
-
-	go func() {
-		for {
-			err = registry.UpdateHealthCheck(instanceId, serviceName)
-			if err != nil {
-				log.Fatalf("error with updating health status: %v",err)
-			}
-			time.Sleep(time.Second * 5)
-		}
-	}()
 
 	defer registry.Deregister(ctx, instanceId)
 

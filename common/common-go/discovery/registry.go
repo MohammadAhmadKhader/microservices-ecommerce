@@ -6,11 +6,9 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	capi "github.com/hashicorp/consul/api"
-	_ "google.golang.org/grpc"
-	_ "google.golang.org/grpc/health"
-	_ "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type Registry struct {
@@ -30,8 +28,8 @@ func NewRegistry(address string) (*Registry, error) {
 	}, nil
 }
 
-func (r *Registry) Register(ctx context.Context, instanceId, grpcAddr, serviceName string) error {
-	hostPort := strings.Split(grpcAddr, ":")
+func (r *Registry) Register(ctx context.Context, instanceId, addrWithPort, serviceName string) error {
+	hostPort := strings.Split(addrWithPort, ":")
 	portStr := hostPort[1]
 	host := hostPort[0]
 	
@@ -87,7 +85,28 @@ func (r *Registry) Discover(ctx context.Context, serviceName string) ([]string, 
 	return services, nil
 }
 
+func InitRegistryAndHandleIt(ctx context.Context, serviceName, address string) (registry *Registry, instanceId string,err error) {
+	registry, err = NewRegistry("localhost:8500")
+	if err != nil {
+		return nil, "",err
+	}
 
-//healthServer := health.NewServer()
-//grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-//healthServer.SetServingStatus(grpcServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
+	instanceId = GenInstanceId(serviceName)
+	err = registry.Register(ctx, instanceId, address, serviceName)
+	if err != nil {
+		return nil, "",err
+	}
+
+	go func() {
+		for {
+			err = registry.UpdateHealthCheck(instanceId, serviceName)
+			if err != nil {
+				log.Fatalf("error with updating health status: %v",err)
+			}
+			
+			time.Sleep(time.Second * 5)
+		}
+	}()
+
+	return registry, instanceId, nil
+}

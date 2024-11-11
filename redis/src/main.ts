@@ -8,7 +8,7 @@ async function bootstrap() {
     transport: Transport.GRPC,
     options:{
       package:"redis",
-      protoPath:join(__dirname, "../../proto/redis.proto"),
+      protoPath:join(__dirname, "../../../common/protos/redis.proto"),
       url:"localhost:6379"
     }
   });

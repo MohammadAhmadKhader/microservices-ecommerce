@@ -6,14 +6,14 @@ import (
 
 	"ms/common/common-go"
 	"ms/gateway/cookie"
-	auth "ms/gateway/generated"
+	"ms/gateway/gateway"
 )
 
 type UserKey string
 
 const User = UserKey("UserKey")
 
-func Authenticate(authClient auth.AuthServiceClient) func(handler http.HandlerFunc) http.HandlerFunc {
+func Authenticate(authClient *gateway.AuthGateway) func(handler http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, err := cookie.GetCookieSession(w, r)
@@ -28,7 +28,7 @@ func Authenticate(authClient auth.AuthServiceClient) func(handler http.HandlerFu
 				return
 			}
 
-			validateSessionResponse, err := authClient.ValidateSession(context.Background(), &auth.ValidateSessionRequest{SessionId: sessionId})
+			validateSessionResponse, err := authClient.ValidateSession(context.Background(), sessionId)
 			if err != nil {
 				common.WriteError(w, http.StatusUnauthorized, err.Error())
 				return

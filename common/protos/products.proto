@@ -12,6 +12,7 @@ service ProductsService {
     rpc Update(UpdateProduct) returns (Product);
     rpc Find(FindAll) returns (FindAllResponse);
     rpc DeleteOne(Id) returns (shared.EmptyBody);
+    rpc FindProductsByIds(FindProductsByIdsRequest) returns (FindProductsByIdsResponse);
 }
 
 message Product {
@@ -54,4 +55,12 @@ message UpdateProduct {
     int32 quantity = 4;
     float price = 5;
     int32 categoryId = 6;
+}
+
+message FindProductsByIdsRequest {
+    repeated int32 Ids = 1;
+}
+
+message FindProductsByIdsResponse {
+    repeated Product products = 1;
 }

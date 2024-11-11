@@ -3,7 +3,8 @@ gen-commons:
 	&& IF EXIST .\\src\\common-ts\\node_modules (rd /S /Q .\\src\\common-ts\\node_modules)
 
 generate:
-	@IF NOT EXIST "generated" mkdir "generated"
+	@IF EXIST "generated" rmdir /s /q "generated"
+	@mkdir "generated"
 	@protoc --plugin=protoc-gen-ts_proto.cmd --ts_proto_out=./generated \
 	--ts_proto_opt=nextjs=true -I=../common/protos/ \
 	../common/protos/products.proto \

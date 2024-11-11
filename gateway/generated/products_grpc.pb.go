@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProductsService_FindOne_FullMethodName   = "/products.ProductsService/FindOne"
-	ProductsService_Create_FullMethodName    = "/products.ProductsService/Create"
-	ProductsService_Update_FullMethodName    = "/products.ProductsService/Update"
-	ProductsService_Find_FullMethodName      = "/products.ProductsService/Find"
-	ProductsService_DeleteOne_FullMethodName = "/products.ProductsService/DeleteOne"
+	ProductsService_FindOne_FullMethodName           = "/products.ProductsService/FindOne"
+	ProductsService_Create_FullMethodName            = "/products.ProductsService/Create"
+	ProductsService_Update_FullMethodName            = "/products.ProductsService/Update"
+	ProductsService_Find_FullMethodName              = "/products.ProductsService/Find"
+	ProductsService_DeleteOne_FullMethodName         = "/products.ProductsService/DeleteOne"
+	ProductsService_FindProductsByIds_FullMethodName = "/products.ProductsService/FindProductsByIds"
 )
 
 // ProductsServiceClient is the client API for ProductsService service.
@@ -35,6 +36,7 @@ type ProductsServiceClient interface {
 	Update(ctx context.Context, in *UpdateProduct, opts ...grpc.CallOption) (*Product, error)
 	Find(ctx context.Context, in *FindAll, opts ...grpc.CallOption) (*FindAllResponse, error)
 	DeleteOne(ctx context.Context, in *Id, opts ...grpc.CallOption) (*EmptyBody, error)
+	FindProductsByIds(ctx context.Context, in *FindProductsByIdsRequest, opts ...grpc.CallOption) (*FindProductsByIdsResponse, error)
 }
 
 type productsServiceClient struct {
@@ -95,6 +97,16 @@ func (c *productsServiceClient) DeleteOne(ctx context.Context, in *Id, opts ...g
 	return out, nil
 }
 
+func (c *productsServiceClient) FindProductsByIds(ctx context.Context, in *FindProductsByIdsRequest, opts ...grpc.CallOption) (*FindProductsByIdsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FindProductsByIdsResponse)
+	err := c.cc.Invoke(ctx, ProductsService_FindProductsByIds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProductsServiceServer is the server API for ProductsService service.
 // All implementations must embed UnimplementedProductsServiceServer
 // for forward compatibility.
@@ -104,6 +116,7 @@ type ProductsServiceServer interface {
 	Update(context.Context, *UpdateProduct) (*Product, error)
 	Find(context.Context, *FindAll) (*FindAllResponse, error)
 	DeleteOne(context.Context, *Id) (*EmptyBody, error)
+	FindProductsByIds(context.Context, *FindProductsByIdsRequest) (*FindProductsByIdsResponse, error)
 	mustEmbedUnimplementedProductsServiceServer()
 }
 
@@ -128,6 +141,9 @@ func (UnimplementedProductsServiceServer) Find(context.Context, *FindAll) (*Find
 }
 func (UnimplementedProductsServiceServer) DeleteOne(context.Context, *Id) (*EmptyBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteOne not implemented")
+}
+func (UnimplementedProductsServiceServer) FindProductsByIds(context.Context, *FindProductsByIdsRequest) (*FindProductsByIdsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindProductsByIds not implemented")
 }
 func (UnimplementedProductsServiceServer) mustEmbedUnimplementedProductsServiceServer() {}
 func (UnimplementedProductsServiceServer) testEmbeddedByValue()                         {}
@@ -240,6 +256,24 @@ func _ProductsService_DeleteOne_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProductsService_FindProductsByIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindProductsByIdsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductsServiceServer).FindProductsByIds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductsService_FindProductsByIds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductsServiceServer).FindProductsByIds(ctx, req.(*FindProductsByIdsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProductsService_ServiceDesc is the grpc.ServiceDesc for ProductsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +300,10 @@ var ProductsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteOne",
 			Handler:    _ProductsService_DeleteOne_Handler,
+		},
+		{
+			MethodName: "FindProductsByIds",
+			Handler:    _ProductsService_FindProductsByIds_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

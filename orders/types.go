@@ -10,8 +10,6 @@ type OrdersService interface {
 	GetOrderById(context.Context, *pb.GetOrderByIdRequest) (*pb.Order, error)
 	UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatusRequest) (*pb.Order, error)
 	CreateOrder(context.Context, *pb.CreateOrderRequest) (*pb.Order, error)
-	ValidateOrder(*pb.CreateOrderRequest) error
-	CollectProductsIds(pb *pb.CreateOrderRequest) []int
 }
 
 type OrdersStore interface {

@@ -1,73 +1,39 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"ms/common/common-go"
+	"ms/common/common-go/discovery"
 
-	pb "ms/gateway/generated"
-	redis "ms/gateway/generated"
+	"ms/gateway/gateway"
 
 	_ "github.com/joho/godotenv/autoload"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
+	serviceName ="gateway"
 	httpAddr           = common.EnvString("HTTP_ADDR", ":3000")
-	orderServiceAddr   = "localhost:2000"
-	productServiceAddr = "localhost:3001"
-	authServiceAddr    = "localhost:3003"
-	redisServiceAddr   = "localhost:6379"
 )
 
-// this will act as load balancer and it will implement the grpc connection to the other services.
 func main() {
+	ctx := context.Background()
 
-	orderConn, err := grpc.Dial(orderServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, httpAddr)
 	if err != nil {
-		log.Println(err)
-		err = nil
-	} else {
-		log.Println("Dialing with order service at: ", orderServiceAddr)
-		defer orderConn.Close()
+		log.Fatal(err)
 	}
 
-	productConn, err := grpc.Dial(productServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Println(err)
-		err = nil
-	} else {
-		log.Println("Dialing with product service at: ", productServiceAddr)
-		defer productConn.Close()
-	}
-
-	authConn, err := grpc.Dial(authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Println(err)
-		err = nil
-	} else {
-		log.Println("Dialing with auth service at: ", authServiceAddr)
-		defer authConn.Close()
-	}
-
-	redisConn, err := grpc.Dial(redisServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Println(err)
-		err = nil
-	} else {
-		log.Println("Dialing with redis service at: ", redisServiceAddr)
-		defer authConn.Close()
-	}
-
-	ordersClient := pb.NewOrderServiceClient(orderConn)
-	productsClient := pb.NewProductsServiceClient(productConn)
-	authClient := pb.NewAuthServiceClient(authConn)
-	redisClient := redis.NewSessionsServiceClient(redisConn)
+	defer registry.Deregister(ctx, instanceId)
+	
+	ordersGateway := gateway.NewOrdersGateway(registry)
+	productsGateway := gateway.NewProductsGateway(registry)
+	authGateway := gateway.NewAuthGateway(registry)
 
 	mux := http.NewServeMux()
-	handler := NewHandler(ordersClient, productsClient, authClient, redisClient)
+	handler := NewHandler(ordersGateway, productsGateway, authGateway)
 	handler.registerRoutes(mux)
 
 	log.Printf("gateway server listening at port %v\n", httpAddr)
