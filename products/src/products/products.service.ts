@@ -4,8 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product, ProductProtobuf } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
-import { FindAllResponse, FindProductsByIdsResponse } from '../../generated/products';
-
+import { FindAllResponse, FindProductsByIdsResponse } from '../../generated/products'
 @Injectable()
 export class ProductsService {
   constructor(@InjectRepository(Product) private productRepository: Repository<Product>){}
@@ -17,8 +16,7 @@ export class ProductsService {
 
   async findAll(page:number, limit:number): Promise<FindAllResponse> {
     const skip = page * limit
-    const count = await this.productRepository.count()
-    const products = await this.productRepository.find({
+    const [products, count] = await this.productRepository.findAndCount({
       order:{
         createdAt:-1
       },

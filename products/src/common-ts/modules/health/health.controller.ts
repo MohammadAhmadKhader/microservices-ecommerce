@@ -9,8 +9,8 @@ export class HealthController {
   constructor() {}
 
   @GrpcMethod(HealthService, "Check")
-  check(req: HealthCheckRequest): HealthCheckResponse {
-    console.log("health checking")
+  check(): HealthCheckResponse {
+    console.log("health checking",)
     return { status:HealthCheckResponse_ServingStatus.SERVING};
   }
 }

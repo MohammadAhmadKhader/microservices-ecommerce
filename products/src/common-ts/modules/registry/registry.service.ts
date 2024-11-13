@@ -1,7 +1,10 @@
 import {Injectable, OnApplicationShutdown, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
 import Consul from "consul";
 import { v4 as uuid } from 'uuid';
-import { RegistryOptions } from "./registry.options";
+import { RegistryOptions } from "../../types";
+import { DiscoveredService } from "../../types";
+import { getRandomInt } from "../../utils";
+import { RpcException } from "@nestjs/microservices";
 
 @Injectable()
 export class ConsulService implements OnApplicationShutdown, OnModuleInit {
@@ -24,7 +27,7 @@ export class ConsulService implements OnApplicationShutdown, OnModuleInit {
     }
 
     async registerService() {
-        try {
+        try {   
             await this.consul.agent.service.register({
                 id: this.instanceId,
                 name: this.options.serviceName,
@@ -37,9 +40,10 @@ export class ConsulService implements OnApplicationShutdown, OnModuleInit {
                     grpc: this.options.checkGrpcHost,
                     interval: this.options.interval,
                     checkid: this.instanceId,
-                    ...this.options.extraCheckOptions
-                },
-                ...this.options.extraRegisterOptions
+                    status:"passing",
+                    ...this.options.extraCheckOptions,
+                }, 
+                ...this.options.extraRegisterOptions,
             })
 
             console.log(`new ${this.options.serviceName} instance was created with id: `, this.instanceId)
@@ -58,6 +62,25 @@ export class ConsulService implements OnApplicationShutdown, OnModuleInit {
             console.log(`deregistering service with id: ${this.instanceId}`)
         } catch (error) {
             console.error(`an unexpected error has ocurred during deregistering products service instance with id: ${this.instanceId}`)
+        }
+    }
+
+    async discover(serviceName: string) {
+        try {
+            const res = await this.consul.health.service({
+                service:serviceName
+            }) as DiscoveredService[]
+            if (res.length == 0) {
+                throw new RpcException(`Service: ${serviceName} was requested and was not found`)
+            }
+
+            const selectedServiceIndex = getRandomInt(0, res.length - 1)
+            const selectedInstance = res[selectedServiceIndex]
+            const instanceAddress = selectedInstance.Service.Address
+            
+            return instanceAddress
+        } catch (error) {
+            console.error(error)
         }
     }
 

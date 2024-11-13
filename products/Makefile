@@ -1,6 +1,5 @@
 gen-commons:
-	xcopy /E /I /Y ..\\common\\common-ts\\*.ts .\\src\\common-ts\\ \
-	&& IF EXIST .\\src\\common-ts\\node_modules (rd /S /Q .\\src\\common-ts\\node_modules)
+	robocopy ..\common\common-ts .\src\common-ts *.ts /E /XD node_modules
 
 generate:
 	@IF EXIST "generated" rmdir /s /q "generated"
