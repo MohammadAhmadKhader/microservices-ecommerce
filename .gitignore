@@ -2,3 +2,6 @@
 **/tmp
 **/dist
 **/node_modules
+**/bin
+**/tsconfig.tsbuildinfo
+**/tsconfig.build.tsbuildinfo

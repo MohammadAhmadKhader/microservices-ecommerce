@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "shared.proto";
+
+package products;
+option go_package = "ms/gateway/pb";
+
+service ProductsService {
+    rpc FindOne(Id) returns (Product);
+    rpc Create(CreateProduct) returns (Product);
+    rpc Update(UpdateProduct) returns (Product);
+    rpc Find(FindAll) returns (FindAllResponse);
+    rpc DeleteOne(Id) returns (shared.EmptyBody);
+    rpc FindProductsByIds(FindProductsByIdsRequest) returns (FindProductsByIdsResponse);
+}
+
+message Product {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    int32 quantity = 4;
+    float price = 5;
+    int32 categoryId = 6;
+    google.protobuf.Timestamp createdAt = 7;
+    google.protobuf.Timestamp updatedAt = 8;
+}
+
+message Id {
+    int32 id = 1;
+}
+
+message FindAll {
+    int32 page = 1;
+    int32 limit = 2;
+}
+message FindAllResponse {
+    int32 page = 1;
+    int32 limit = 2;
+    int64 count = 3;
+    repeated Product products = 4;
+}
+message CreateProduct {
+    string name = 1;
+    string description = 2;
+    int32 quantity = 3;
+    float price = 4;
+    int32 categoryId = 5;
+}
+
+message UpdateProduct {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    int32 quantity = 4;
+    float price = 5;
+    int32 categoryId = 6;
+}
+
+message FindProductsByIdsRequest {
+    repeated int32 Ids = 1;
+}
+
+message FindProductsByIdsResponse {
+    repeated Product products = 1;
+}

@@ -3,7 +3,7 @@ go 1.23.2
 toolchain go1.23.2
 
 use (
-	./common/common-go
-	./gateway
-	./orders
+	./golang-services/common
+	./golang-services/gateway
+	./golang-services/orders
 )

@@ -1,11 +1,12 @@
 generate-protos:
-	@cd products && make generate
-	@cd orders && make generate
-	@cd gateway && make generate
-	@cd redis && make generate
-	@cd users && make generate
-	@cd auth && make generate
-	@cd common/common-ts && make generate
+	@cd ts-services/common && make generate
+	@cd golang-services/common && make generate
 
-run:
-	bash ./start.sh
+run-dev:
+	bash ./start-dev.sh
+
+run-prod:
+	bash ./start-prod.sh
+
+run-ts:
+	nest start auth redis users 

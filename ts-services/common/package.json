@@ -1,0 +1,14 @@
+{
+  "name": "@ms/common",
+  "scripts": {
+    "watch": "tsc --watch"
+  },
+  "version": "1.0.0",
+  "main": "utils.js",
+  "author": "",
+  "license": "ISC",
+  "types": "./utils.d.ts",
+  "exports":{
+    "./*":"./dist/*.js"
+  }
+}
