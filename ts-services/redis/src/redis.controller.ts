@@ -1,5 +1,5 @@
 import { Controller} from '@nestjs/common';
-import { RedisService } from './app.service';
+import { RedisService } from './redis.service';
 import { GrpcMethod } from '@nestjs/microservices';
 import { CreateSessionRequest, CreateSessionResponse, DeleteSessionRequest, 
   DeleteSessionResponse, GetSessionRequest, GetSessionResponse,
@@ -8,7 +8,7 @@ import { CreateSessionRequest, CreateSessionResponse, DeleteSessionRequest,
 const ServiceName = "SessionsService"
 
 @Controller()
-export class AppController {
+export class RedisController {
   constructor(private readonly redisService: RedisService) {}
 
   @GrpcMethod(ServiceName, "CreateSession")

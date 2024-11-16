@@ -49,14 +49,26 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 		return nil, err
 	}
 
-	o := models.Order{
+	sentOrder := models.Order{
 		ID:         int(order.ID),
 		UserID:     uint(order.UserId),
 		Status:     models.Status(order.Status.String()),
 		TotalPrice: order.TotalPrice,
 	}
 
-	marshalledOrder, err := json.Marshal(o)
+	if order.Status == pb.Status_Completed {
+		var orderItems []models.OrderItem
+		for _, item := range order.Items {
+			orderItems = append(orderItems, models.OrderItem{
+				Quantity:  int(item.Quantity),
+				ProductID: int(item.ID),
+			})
+
+			sentOrder.OrderItems = orderItems
+		}
+	}
+
+	marshalledOrder, err := json.Marshal(sentOrder)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -64,11 +76,18 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 	orderResp := &pb.UpdateOrderStatusResponse{Order: order}
 
-	h.amqpChan.PublishWithContext(ctx, broker.OrderStatusUpdated, "", false, false, amqp.Publishing{
-		ContentType:  "application/json",
-		Body:         marshalledOrder,
-		DeliveryMode: amqp.Persistent,
-	})
+	if orderResp.Order.Status == pb.Status_Completed {
+		err = h.amqpChan.PublishWithContext(ctx, string(broker.ProductsExchange), string(broker.RK_OrderCompleted), false, false, amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         marshalledOrder,
+			DeliveryMode: amqp.Persistent,
+		})
+
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+	}
 
 	return orderResp, err
 }

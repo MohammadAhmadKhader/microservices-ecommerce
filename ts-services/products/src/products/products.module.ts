@@ -3,23 +3,13 @@ import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { Product } from './entities/product.entity';
-import { BrokerService } from '@ms/common/modules/broker/broker.service';
-import { consumer } from './broker';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
 
 @Module({
   imports: [TypeOrmModule.forFeature([Product])],
   controllers: [ProductsController],
-  providers: [ProductsService, {
-    provide:BrokerService,
-    useFactory:async ()=>{
-      const broker = new BrokerService()
-      await broker.initialize()
-      await broker.addConsumer(consumer)
-      return broker
-    }
-  },
+  providers: [ProductsService,
   {
     provide: ConsulService,
     useFactory:()=>{

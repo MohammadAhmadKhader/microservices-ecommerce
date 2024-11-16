@@ -31,12 +31,12 @@ func NewConsumer(service OrdersService) *Consumer {
 }
 
 func (c *Consumer) Consume(channel *amqp.Channel) {
-	queue, err := channel.QueueDeclare("", false, true, false, false, nil)
+	queue, err := channel.QueueDeclare(string(broker.OrdersQueue), false, true, false, false, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = channel.QueueBind(queue.Name, "", broker.OrderStatusUpdated, false, nil)
+	err = channel.QueueBind(queue.Name, string(broker.RK_ProductStockReservedFailed), string(broker.OrdersExchange), false, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,43 +50,33 @@ func (c *Consumer) Consume(channel *amqp.Channel) {
 
 	go func() {
 		for delivery := range messages {
-			log.Println("Received message: ", string(delivery.Body))
+			log.Println("received message: ", string(delivery.Body))
+			
+			switch (delivery.RoutingKey) {
+			case string(broker.RK_ProductStockReservedFailed):
+				var messageBody = ProductsStockFailed{}
+				err := json.Unmarshal(delivery.Body, &messageBody)
+				if err != nil {
+					log.Println(err)
+					delivery.Nack(false, false)
+					continue
+				}
 
-			var order = models.Order{}
-			err := json.Unmarshal(delivery.Body, &order)
-			if err != nil {
-				log.Println(err)
-				delivery.Nack(false, false)
-				continue
+				status := models.Status(messageBody.Status)
+				_, err = c.service.UpdateOrderStatus(context.Background(), &pb.UpdateOrderStatusRequest{
+					Id:     int32(messageBody.OrderId),
+					Status: pb.Status((&status).GetEnumNum()),
+				})
+				if err != nil {
+					log.Println(err)
+					delivery.Nack(false, false)
+					continue
+				}
+				delivery.Ack(true)
 			}
-
-			status, isValidStatus := pb.Status_value[string(order.Status)]
-			if !isValidStatus {
-				log.Fatal(fmt.Errorf("invalid order status received: %v", order.Status))
-				delivery.Nack(false, false)
-				continue
-			}
-
-			updatedOrder, err := c.service.UpdateOrderStatus(context.Background(), &pb.UpdateOrderStatusRequest{
-				Id:     int32(order.ID),
-				Status: pb.Status(status),
-			})
-			if err != nil {
-				log.Fatal(err)
-				delivery.Nack(false, false)
-				continue
-			}
-
-			if updatedOrder.Status == pb.Status_Completed {
-				fmt.Println("Completed Order Send Email")
-			} else {
-				fmt.Println("Order Status is: ", updatedOrder.Status)
-			}
-
-			delivery.Ack(true)
 		}
 	}()
 
-	fmt.Println("Consuming")
+	fmt.Println("Consuming orders queue")
 	<-listener
 }

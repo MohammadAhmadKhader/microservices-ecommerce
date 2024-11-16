@@ -3,9 +3,9 @@ package models
 import pb "ms/common/generated"
 
 type OrderItem struct {
-	ID        int     `json:"id" gorm:"primarykey;autoIncrement"`
+	ID        int     `json:"id,omitempty" gorm:"primarykey;autoIncrement"`
 	OrderID   uint    `json:"orderId" gorm:"index;not null"`
-	UnitPrice float32 `json:"unitPrice"`
+	UnitPrice float32 `json:"unitPrice,omitempty"`
 	Quantity  int     `json:"quantity"`
 	ProductID int     `json:"productId"`
 }

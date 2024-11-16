@@ -1,7 +1,9 @@
 import {Injectable, OnApplicationShutdown, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
 import Consul from "consul";
 import { v4 as uuid } from 'uuid';
-import { RegistryOptions } from "./registry.options";
+import { DiscoveredService, RegistryOptions, RegistryServiceName } from "../../types";
+import { RpcException } from "@nestjs/microservices";
+import { getRandomInt } from "../../utils";
 
 @Injectable()
 export class ConsulService implements OnApplicationShutdown, OnModuleInit {
@@ -59,6 +61,25 @@ export class ConsulService implements OnApplicationShutdown, OnModuleInit {
             console.log(`deregistering service with id: ${this.instanceId}`)
         } catch (error) {
             console.error(`an unexpected error has ocurred during deregistering products service instance with id: ${this.instanceId}`)
+        }
+    }
+
+    async discover(serviceName: RegistryServiceName) {
+        try {
+            const res = await this.consul.health.service({
+                service: serviceName
+            }) as DiscoveredService[]
+            if (res.length == 0) {
+                throw new RpcException(`Service: ${serviceName} was requested and was not found`)
+            }
+            const selectedServiceIndex = getRandomInt(0, res.length - 1)
+            const selectedInstance = res[selectedServiceIndex]
+            const instanceAddress = selectedInstance.Service.Address
+            const instancePort = selectedInstance.Service.Port
+            
+            return instanceAddress+":"+instancePort
+        } catch (error) {
+            console.error(error)
         }
     }
 

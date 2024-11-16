@@ -8,8 +8,8 @@ async function bootstrap() {
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.GRPC,
       options: {
-        package: 'users',
-        protoPath: join(__dirname, './protos/users.proto'),
+        package: ['grpc.health.v1','users'],
+        protoPath: [join(__dirname, './protos/health.proto'),join(__dirname, './protos/users.proto')],
         url:"localhost:3002"
       },
     });

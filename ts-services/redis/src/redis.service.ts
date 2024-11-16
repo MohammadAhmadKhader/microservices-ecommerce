@@ -38,6 +38,7 @@ export class RedisService {
     try {
       const sessionStr = await this.redisClient.get(sessionId)
       const session = JSON.parse(sessionStr) as Session
+
       return { session }
     }catch(err){
       console.error(`[Redis - Service] - An unexpected error has occurred during getting a session`, err)

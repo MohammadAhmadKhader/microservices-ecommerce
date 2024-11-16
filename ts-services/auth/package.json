@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@ms/common":"1.0.0"
+    "@ms/common": "1.0.0",
+    "bcrypt": "^5.1.1"
   }
 }

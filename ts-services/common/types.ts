@@ -1,6 +1,14 @@
 import * as amqp from "amqplib"
 import { Check } from "consul/lib/agent/check"
 import { Node } from "consul/lib/health"
+import { CheckOptions } from "consul/lib/agent/check";
+import { RegisterOptions } from "consul/lib/agent/service";
+import { Observable } from "rxjs"
+import { UsersService } from "./generated/users"
+import { SessionsService } from "./generated/redis"
+import { ProductsService } from "./generated/products"
+import { OrderService } from "./generated/orders"
+import { AuthService } from "./generated/auth"
 
 export type AssertQueueParams = {queue: string, options: amqp.Options.AssertQueue}
 
@@ -28,12 +36,9 @@ type Service = {
     ModifyIndex: number
 }
 
-import { CheckOptions } from "consul/lib/agent/check";
-import { RegisterOptions } from "consul/lib/agent/service";
-
 export interface RegistryOptions {
     serviceId: string;
-    serviceName: string;
+    serviceName: RegistryServiceName;
     serviceHost: string;
     servicePort: number;
     checkName: string;
@@ -46,3 +51,19 @@ export interface RegistryOptions {
     extraRegisterOptions?: Partial<RegisterOptions>,
     customInstanceId?: string
 }
+
+export type ObservableService<T> = {
+    [K in keyof T]: T[K] extends (...args: infer TArgs) => Promise<infer TResult>
+      ? (...args: TArgs) => Observable<Promise<TResult>>
+      : T[K];
+};
+
+export type ObservableUsersService = ObservableService<UsersService>
+export type ObservableSessionsService = ObservableService<SessionsService>
+export type ObservableProductsService = ObservableService<ProductsService>
+export type ObservableOrdersService = ObservableService<OrderService>
+export type ObservableAuthService = ObservableService<AuthService>
+
+// TODO: rename SessionsService to Redis
+export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "SessionsService"
+export type RegistryServiceName = "products" | "auth" | "orders" | "users" | "gateway" | "redis" 

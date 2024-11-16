@@ -6,3 +6,16 @@ export interface FindAllProducts {
     count: number
     products: ProductProtobuf[]
 }
+
+export interface OrderCompletedMessage {
+    id:number,
+    userId:number,
+    totalPrice:number,
+    status:"Completed",
+    orderItems:{
+        quantity:number,
+        productId:number,
+    }[]
+}
+
+export type UpdateStocksParams = OrderCompletedMessage["orderItems"]

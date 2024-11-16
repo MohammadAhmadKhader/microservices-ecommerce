@@ -85,12 +85,26 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	}
 
 	order.Status = models.Status(p.Status.String())
-	order, err = s.store.UpdateStatus(ctx, id, order)
-	if err != nil {
-		return nil, err
-	}
+	var returnedOrder *models.Order
+	
+	if order.Status == models.Completed {
+		order, err = s.store.UpdateStatusAndFetchItems(ctx, id, order)
+		if err != nil {
+			return nil, err
+		}
 
-	protoOrder := order.ToProto()
+		returnedOrder = order
+	} else {
+		order, err = s.store.UpdateStatus(ctx, id, order)
+		if err != nil {
+			return nil, err
+		}
+
+		returnedOrder = order
+	}
+	
+
+	protoOrder := returnedOrder.ToProto()
 
 	return protoOrder, nil
 }
