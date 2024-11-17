@@ -46,33 +46,6 @@ func Connect(user, pass, host, port string) (*amqp.Channel, func() error) {
 	return ch, conn.Close
 }
 
-type AmqpHeaders map[string]any
-
-func (a AmqpHeaders) GetKey(key string) string {
-	value, ok := a[key]
-	if !ok {
-		return ""
-	}
-
-	return value.(string)
-}
-
-func (a AmqpHeaders) SetKey(key, value string) {
-	a[key] = value
-}
-
-func (a AmqpHeaders) GetKeys(key, value string) []string {
-	keys := make([]string, len(a))
-	index := 0
-
-	for key := range a {
-		keys[index] = key
-		index++
-	}
-
-	return keys
-}
-
 func createDLQandDLX(ch *amqp.Channel) error {
 	// declaring main q
 	q, err := ch.QueueDeclare(Main_Queue, true, false, false, false, nil)

@@ -3,6 +3,8 @@ import { GrpcMethod, Payload } from '@nestjs/microservices';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Metadata } from '@grpc/grpc-js';
+import { context, propagation } from '@opentelemetry/api';
 
 const ProductService = "ProductsService"
 
@@ -21,9 +23,13 @@ export class ProductsController {
   }
 
   @GrpcMethod(ProductService, "FindProductsByIds")
-  findProductsByIds(data:{Ids: number[]}) {
-    console.log(data)
-    return this.productsService.findProductsByIds(data.Ids);
+  findProductsByIds(data:{Ids: number[]}, metadata: Metadata) {
+    console.log(metadata)
+    const carrier= metadata.getMap()
+    const ctx = propagation.extract(context.active(), carrier)
+    console.log(ctx, "context")
+    ctx.getValue
+    return this.productsService.findProductsByIds(data.Ids, metadata);
   }
 
   @GrpcMethod(ProductService, "FindOne")

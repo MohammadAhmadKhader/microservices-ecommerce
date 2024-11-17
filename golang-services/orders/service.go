@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 
-	"ms/orders/gateway"
+	"ms/common"
 	pb "ms/common/generated"
+	"ms/orders/gateway"
 	"ms/orders/models"
 	"ms/orders/utils"
+
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc/metadata"
 )
 
 type service struct {
@@ -27,11 +31,21 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 		productIds = append(productIds, item.ID)
 	}
 
-	_, err := s.productsGateway.GetProductsFromIds(ctx, productIds)
+	tracer := otel.Tracer("products-tracer")
+
+	headers := common.InjectMetadataIntoContext(ctx)
+
+	tracingCtx, span := tracer.Start(ctx, "ProductsGateway - GetProductsFromIds")
+	defer span.End()
+	
+
+	injectedCtx := metadata.NewOutgoingContext(tracingCtx, metadata.New(headers))
+	span.AddEvent("Sending request to productsGateway")
+	_, err := s.productsGateway.GetProductsFromIds(injectedCtx, productIds)
 	if err != nil {
 		return nil, err
 	}
-
+	span.AddEvent("Returned response from productsGateway")
 	err = utils.ValidateOrder(p)
 	if err != nil {
 		return nil, err
@@ -102,7 +116,6 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 
 		returnedOrder = order
 	}
-	
 
 	protoOrder := returnedOrder.ToProto()
 

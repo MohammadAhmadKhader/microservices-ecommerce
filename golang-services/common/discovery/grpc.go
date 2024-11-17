@@ -17,7 +17,12 @@ func ConnectService(ctx context.Context, serviceName string, serviceRegistry Ser
 	}
 
 	addressesCount := len(addresses)
-	log.Printf("service: '%v' have these addresses: '%v' count: '%v' \n", serviceName, addresses, addressesCount)
 
-	return grpc.NewClient(addresses[rand.Intn(addressesCount)], grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addresses[rand.Intn(addressesCount)], grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return conn, nil
 }

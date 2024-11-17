@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"ms/common/discovery"
 	pb "ms/common/generated"
@@ -23,7 +22,8 @@ func NewGateway(registry *discovery.Registry) *Gateway {
 func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) ([]*pb.Product, error) {
 	conn, err := discovery.ConnectService(ctx, "products", g.registry)
 	if err != nil {
-		log.Fatal("an error has ocurred during connection with products service: ", err)
+		err := fmt.Errorf("an error has ocurred during connection with products service: %v", err.Error())
+		return nil, err
 	}
 	defer conn.Close()
 

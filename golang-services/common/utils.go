@@ -1,28 +1,30 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const (
 	defaultLimit = 10
-	maxLimit = 100
+	maxLimit     = 100
 )
 
 func GetPagination(r *http.Request) (int32, int32, error) {
-	page ,err := strconv.Atoi(r.URL.Query().Get("page"))
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
-		return 0,0,err
+		return 0, 0, err
 	}
 
-	limit ,err := strconv.Atoi(r.URL.Query().Get("limit"))
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
-		return 0,0,err
+		return 0, 0, err
 	}
 
 	if page <= 0 {
@@ -39,7 +41,7 @@ func GetPagination(r *http.Request) (int32, int32, error) {
 }
 
 func WriteJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type","application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
@@ -49,9 +51,8 @@ func ReadJSON(r *http.Request, data interface{}) error {
 }
 
 func WriteError(w http.ResponseWriter, status int, message string) {
-	WriteJSON(w, status, map[string]string{"error":message})
+	WriteJSON(w, status, map[string]string{"error": message})
 }
-
 
 func HandleGrpcErr(err error, status *status.Status, w http.ResponseWriter, customStatus *int) {
 	if status.Code() != codes.InvalidArgument {
@@ -65,4 +66,11 @@ func HandleGrpcErr(err error, status *status.Status, w http.ResponseWriter, cust
 	}
 
 	WriteError(w, http.StatusInternalServerError, err.Error())
+}
+
+func InjectMetadataIntoContext(ctx context.Context) HeadersCarrier {
+	carrier := make(HeadersCarrier)
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+
+	return carrier
 }

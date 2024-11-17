@@ -2,9 +2,11 @@ import { MicroserviceOptions , Transport} from '@nestjs/microservices';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
+import { initTracing } from '@ms/common/observability/telemetry';
 
 async function bootstrap() {
   try {
+    
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.GRPC,
       options: {
@@ -16,7 +18,7 @@ async function bootstrap() {
 
     app.enableShutdownHooks()
     await app.listen()
-    
+    initTracing("products")
     console.log("Javascript microservice connected at 3001")
   }catch(err) {
     console.log(err)

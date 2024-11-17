@@ -15,11 +15,20 @@ import (
 )
 
 var (
-	serviceName = "orders"
-	grpcAddr = common.EnvString("GRPC_ADDR", "localhost:2000")
+	serviceName   = "orders"
+	grpcAddr      = common.EnvString("GRPC_ADDR", "localhost:2000")
+	TelemetryAddr = common.EnvString("TELEMETRY_ADDR", "localhost:4318")
 )
 
 func main() {
+
+	ctx := context.Background()
+	tracer, err := common.InitTracer(ctx, TelemetryAddr, serviceName)
+	if err != nil {
+		log.Println(err)
+	}
+	defer tracer.Shutdown(ctx)
+
 	grpcServer := grpc.NewServer()
 
 	listener, err := net.Listen("tcp", grpcAddr)
@@ -34,9 +43,7 @@ func main() {
 		amqpChan.Close()
 	}()
 
-	ctx := context.Background()
-
-	registry, instanceId, err:= discovery.InitRegistryAndHandleIt(ctx, serviceName, grpcAddr)
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, grpcAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,11 +53,13 @@ func main() {
 	gateway := gateway.NewGateway(registry)
 	store := NewStore(DB)
 	service := NewService(store, gateway)
+	serviceWithOtel := NewTelemetryMiddleware(service)
+	serviceWithLogging := NewLoggingMiddleware(serviceWithOtel)
 
-	consumer := NewConsumer(service)
+	consumer := NewConsumer(serviceWithLogging)
 	go consumer.Consume(amqpChan)
 
-	NewGrpcHandler(grpcServer, service, amqpChan)
+	NewGrpcHandler(grpcServer, serviceWithLogging, amqpChan)
 
 	log.Println("listening on port: ", grpcAddr)
 	if err := grpcServer.Serve(listener); err != nil {
