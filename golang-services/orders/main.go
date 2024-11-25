@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -29,7 +30,12 @@ func main() {
 	}
 	defer tracer.Shutdown(ctx)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+	)
+
+	common.GrpcInitMetrics(grpcServer)
 
 	listener, err := net.Listen("tcp", grpcAddr)
 	if err != nil {

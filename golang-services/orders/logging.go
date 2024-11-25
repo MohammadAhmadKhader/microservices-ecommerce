@@ -25,7 +25,7 @@ func NewLoggingMiddleware(service OrdersService) *LoggingMiddleware {
 }
 
 func (l *LoggingMiddleware) loggingHandler(start time.Time, handlerName string) {
-	l.logger.Info().Str("handler", handlerName).Dur("duration-s", time.Since(start)).Msg("")
+	l.logger.Info().Str("handler", handlerName).Dur("duration", time.Since(start)).Msg("")
 }
 
 func (l *LoggingMiddleware) GetOrderById(ctx context.Context, pb *pb.GetOrderByIdRequest) (*pb.Order, error) {

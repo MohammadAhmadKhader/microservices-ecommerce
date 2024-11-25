@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ms/common"
 	"ms/orders/models"
 
 	"gorm.io/driver/mysql"
@@ -11,7 +12,11 @@ var DB *gorm.DB = initDB()
 
 func initDB() *gorm.DB {
 	dsn := GetMysqlDSN()
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	logger := common.NewCustomGormLogger()
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger,
+	})
+	
 	if err != nil {
 		panic(err)
 	}

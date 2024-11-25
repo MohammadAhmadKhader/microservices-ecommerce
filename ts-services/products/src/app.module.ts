@@ -3,7 +3,6 @@ import { ProductsModule } from './products/products.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthModule } from '@ms/common/modules/health/health.module';
-
 @Module({
   imports: [
     ProductsModule, 
@@ -20,6 +19,6 @@ import { HealthModule } from '@ms/common/modules/health/health.module';
       logging:true,
       synchronize:true,
     })
-  ],
+  ]
 })
 export class AppModule {}

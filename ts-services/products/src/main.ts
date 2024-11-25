@@ -6,8 +6,8 @@ import { initTracing } from '@ms/common/observability/telemetry';
 
 async function bootstrap() {
   try {
-    
-    const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    const mainApp = await NestFactory.create(AppModule)
+    const service = mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
         package: ['products','grpc.health.v1'],
@@ -16,9 +16,12 @@ async function bootstrap() {
       },
     });
 
-    app.enableShutdownHooks()
-    await app.listen()
+    mainApp.enableShutdownHooks()
+    await service.listen()
+    await mainApp.listen(3002)
+
     initTracing("products")
+
     console.log("Javascript microservice connected at 3001")
   }catch(err) {
     console.log(err)

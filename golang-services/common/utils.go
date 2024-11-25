@@ -3,12 +3,18 @@ package common
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -42,7 +48,14 @@ func GetPagination(r *http.Request) (int32, int32, error) {
 
 func WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+
+	if rec, ok := w.(*responseRecorder); ok {
+		rec.WriteHeader(status)
+	} else {
+		log.Println("Error: Expected '*responseRecorder' type received 'http.ResponseWriter' ")
+		w.WriteHeader(status)
+	}
+
 	json.NewEncoder(w).Encode(data)
 }
 
@@ -73,4 +86,32 @@ func InjectMetadataIntoContext(ctx context.Context) HeadersCarrier {
 	otel.GetTextMapPropagator().Inject(ctx, carrier)
 
 	return carrier
+}
+
+func ServiceIPGetter(ctx context.Context) (string, error) {
+	kubeConfig := os.Getenv("KUBCONFIG")
+	if kubeConfig == "" {
+		return "", fmt.Errorf("kubeConfig was not found")
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	if err != nil {
+		return "", err
+	}
+
+	clinetset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", err
+	}
+
+	podName := os.Getenv("POD_NAME")
+	namespace := os.Getenv("POD_NAMESPACE")
+
+	pod, err := clinetset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	podIP := pod.Status.PodIP
+
+	return podIP, nil
 }

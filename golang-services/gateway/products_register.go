@@ -12,11 +12,16 @@ import (
 )
 
 func (h *handler) productsRegister(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/test", h.Test)
 	mux.HandleFunc("GET /api/products", h.HandleGettingAllProducts)
 	mux.HandleFunc("GET /api/products/{productId}", h.HandleGettingProductById)
 	mux.HandleFunc("POST /api/products", h.HandleCreateProduct)
 	mux.HandleFunc("PUT /api/products/{productId}", h.HandleUpdateProduct)
 	mux.HandleFunc("DELETE /api/products", h.HandleDeleteOneProduct)
+}
+
+func (h *handler) Test(w http.ResponseWriter, r *http.Request) {
+	common.WriteJSON(w, http.StatusOK, map[string]any{"message":"test success"})
 }
 
 func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,8 @@ import (
 var (
 	serviceName ="gateway"
 	httpAddr           = common.EnvString("HTTP_ADDR", ":3000")
+	pormHost           = common.EnvString("PORM_HOST", "")
+	pormPort           = common.EnvString("PORM_HOST", "")
 )
 
 func main() {
@@ -36,8 +38,9 @@ func main() {
 	handler := NewHandler(ordersGateway, productsGateway, authGateway)
 	handler.registerRoutes(mux)
 
+	common.HttpInitMetrics(mux, pormHost, pormPort)
 	log.Printf("gateway server listening at port %v\n", httpAddr)
-	if err := http.ListenAndServe(httpAddr, mux); err != nil {
+	if err := http.ListenAndServe(httpAddr, common.MetricsHandler(mux)); err != nil {
 		log.Fatal("Failed to start the http server")
 	}
 }

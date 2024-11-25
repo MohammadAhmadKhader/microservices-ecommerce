@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +14,9 @@ import {MethodLogger} from "@ms/common/observability/logger"
 import { Metadata } from '@grpc/grpc-js';
 @Injectable()
 export class ProductsService implements OnModuleInit {
-  constructor(@InjectRepository(Product) private productRepository: Repository<Product>){}
+  constructor(
+    @InjectRepository(Product) private productRepository: Repository<Product>
+    ){}
 
   async onModuleInit(){
     await this.initializeBroker()

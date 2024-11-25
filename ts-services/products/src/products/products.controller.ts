@@ -1,13 +1,15 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Metadata } from '@grpc/grpc-js';
 import { context, propagation } from '@opentelemetry/api';
+import { MetricsInterceptor } from '@ms/common/interceptors';
 
 const ProductService = "ProductsService"
 
+@UseInterceptors(MetricsInterceptor)
 @Controller()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}

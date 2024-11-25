@@ -1,3 +1,5 @@
+import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
+import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
@@ -7,7 +9,13 @@ import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product])],
+  imports: [
+    TypeOrmModule.forFeature([Product]),
+    MetricsModule.register(new MetricsService({
+      name:"products_service_calls_counter",
+      help:"products service calls counters",
+    })),
+  ],
   controllers: [ProductsController],
   providers: [ProductsService,
   {
@@ -27,6 +35,7 @@ import {v4 as uuid} from "uuid"
         checkId: serviceId,
       })
     }
-  }],
+  }
+],
 })
 export class ProductsModule {}

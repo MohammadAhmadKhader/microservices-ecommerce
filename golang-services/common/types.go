@@ -1,5 +1,7 @@
 package common
 
+import "net/http"
+
 type HeadersCarrier map[string]string
 
 func (a HeadersCarrier) Get(key string) string {
@@ -25,4 +27,14 @@ func (a HeadersCarrier) Keys() []string {
 	}
 
 	return keys
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rec *responseRecorder) WriteHeader(code int) {
+	rec.statusCode = code
+	rec.ResponseWriter.WriteHeader(code)
 }
