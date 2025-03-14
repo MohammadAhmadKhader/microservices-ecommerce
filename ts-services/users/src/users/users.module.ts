@@ -5,17 +5,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
-import { createDBIfNotExist } from 'src/utils/utils';
 import { ConfigModule } from '@nestjs/config';
+import ServiceConfig from "./users.config"
+
+export let EnvsConfig: EnvConfig
 
 @Module({
   imports:[
-    ConfigModule.forRoot(),
-    (async () => {
-      await createDBIfNotExist()
-      return TypeOrmModule.forFeature([User])
-    })()
-  ],
+    ConfigModule.forRoot({
+      load:[ServiceConfig]
+    }),
+    TypeOrmModule.forFeature([User])],
   controllers: [UsersController],
   providers: [UsersService, {
     provide: ConsulService,

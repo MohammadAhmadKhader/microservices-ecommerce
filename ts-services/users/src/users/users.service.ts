@@ -1,9 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import {toProtobufTimestamp} from "@ms/common/utils"
 import { CreateUserRequest, FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
+import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
 
 @Injectable()
 export class UsersService {
@@ -13,7 +14,7 @@ export class UsersService {
     const lowerCaseEmail = createDto.email.toLowerCase()
     const IsUserExist = await this.usersRepository.exists({where:{email: lowerCaseEmail}})
     if (IsUserExist) {
-      throw new BadRequestException("user with this email already exist")
+      throw new RpcAlreadyExistsException("User with this email already exist")
     }
 
     const createdUser = this.usersRepository.create({...createDto, email: lowerCaseEmail})
@@ -66,7 +67,7 @@ export class UsersService {
     const {id, ...updateDto} = req
     const user = await this.usersRepository.findOneBy({id})
     if (!user) {
-      throw new NotFoundException(`product with id ${id} was not found`)
+      throw new RpcNotFoundException(`product with id ${id} was not found`)
     }
     
     Object.assign(user, updateDto)

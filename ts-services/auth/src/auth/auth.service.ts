@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { LoginResponse, RegistResponse, ValidateSessionResponse as AuthValidateSessionResponse} from '@ms/common/generated/auth';
 import { EmptyBody} from '@ms/common/generated/shared';
 import { comparePassword, hashPassword } from '../auth/utils/hash';
@@ -7,6 +7,7 @@ import {getRedisGrpcService, getUsersGrpcService} from "@ms/common/grpc"
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import { TraceMethod } from './telemetry';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
+import { RpcAlreadyExistsException, RpcInternalException, RpcInvalidArgumentException, RpcUnauthorizedException } from "@ms/common/rpcExceprions"
 
 @Injectable()
 export class AuthService {
@@ -19,17 +20,17 @@ export class AuthService {
     const userByEmailResp = await handleObservable(usersService.FindOneUserByEmail({email}))
     const user = userByEmailResp?.user
     if (!user) {
-      throw new BadRequestException("wrong email or password")
+      throw new RpcInvalidArgumentException("wrong email or password")
     }
 
     const isMatched = comparePassword(password, user.password)
     if (!isMatched) {
-      throw new BadRequestException("wrong email or password")
+      throw new RpcInvalidArgumentException("wrong email or password")
     }
 
     const redisService = await this.getRedisService()
-
     const createSessionResponse = await handleObservable(redisService.CreateSession({userId:user.id}))
+    
     return {user, sessionId: createSessionResponse.session.id};
   }
 
@@ -44,7 +45,7 @@ export class AuthService {
       const errMsg = "User with such email already exists"
       span.setAttribute("error", true)
       span.setAttribute("error.message", errMsg)
-      throw new BadRequestException(errMsg)
+      throw new RpcAlreadyExistsException(errMsg)
     }
 
     const hashedPassword = hashPassword(password)
@@ -60,14 +61,14 @@ export class AuthService {
       const errMsg = "An unexpected error has occurred during creating user"
       span.setAttribute("error", true)
       span.setAttribute("error.message", errMsg)
-      throw new InternalServerErrorException(errMsg)
+      throw new RpcInternalException(errMsg)
     }
     
     const redisService = await this.getRedisService()
 
     const createSessionResponse = await handleObservable(redisService.CreateSession({userId:createdUser.id}))
     if (!createSessionResponse.success) {
-      throw new InternalServerErrorException(`${createSessionResponse.message}`)
+      throw new RpcInternalException(createSessionResponse.message)
     }
 
     span.setStatus({code: SpanStatusCode.OK})
@@ -78,11 +79,11 @@ export class AuthService {
   async resetPassword(userId:number, oldPassword: string, newPassword: string, confirmNewPassword: string): Promise<EmptyBody> {
     // this logic must be moved to outside to a validator
     if (oldPassword == newPassword) {
-      throw new BadRequestException("old and new password are same")
+      throw new RpcInvalidArgumentException("old and new password are same")
     }
 
     if (newPassword != confirmNewPassword) {
-      throw new BadRequestException("new password and confirm new password must match")
+      throw new RpcInvalidArgumentException("new password and confirm new password must match")
     }
     
     const usersService = await this.getUsersService()
@@ -91,7 +92,7 @@ export class AuthService {
     const user = findUserResponse.user
     const isMatching = comparePassword(oldPassword, user.password)
     if (!isMatching) {
-      throw new BadRequestException("invalid password")
+      throw new RpcInvalidArgumentException("invalid password")
     }
     const hashedPassword = hashPassword(newPassword)
     await handleObservable(usersService.UpdateUser({id:user.id, password: hashedPassword}))
@@ -104,7 +105,7 @@ export class AuthService {
     const redisService = await this.getRedisService()
     const validateSessionResponse = await handleObservable(redisService.ValidateSession({sessionId:sessionId}))
     if (!validateSessionResponse.success) {
-      throw new UnauthorizedException(`Unauthorized - ${validateSessionResponse.message}`)
+      throw new RpcUnauthorizedException(`Unauthorized - ${validateSessionResponse.message}`)
     }
 
     const usersService = await this.getUsersService()

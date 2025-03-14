@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,11 +8,11 @@ import { FindAllResponse, FindProductsByIdsResponse } from '@ms/common/generated
 import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
-import { RpcException } from '@nestjs/microservices';
 import { MethodLogger} from "@ms/common/observability/logger"
 import { Metadata } from '@grpc/grpc-js';
 import { trace } from '@opentelemetry/api';
 import { serviceTracer, TraceMethod } from './telemtry';
+import {RpcFailedPreConditionException, RpcNotFoundException} from "@ms/common/rpcExceprions"
 @Injectable()
 export class ProductsService implements OnModuleInit {
   constructor(
@@ -80,7 +80,7 @@ export class ProductsService implements OnModuleInit {
       id,
     })
     if (!product) {
-      throw new RpcException(`product with id '${id}' was not found`)
+      throw new RpcNotFoundException(`product with id '${id}' was not found`)
     }
    
     const productResponse = product.ConvertToProtobufType()
@@ -109,7 +109,7 @@ export class ProductsService implements OnModuleInit {
   async update(id: number, updateProductDto: Partial<UpdateProductDto>) : Promise<Product> {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
-      throw new NotFoundException(`product with id ${id} was not found`)
+      throw new RpcNotFoundException(`product with id ${id} was not found`)
     }
     
     Object.assign(product, updateProductDto)
@@ -145,7 +145,7 @@ export class ProductsService implements OnModuleInit {
       const existingIdMap = {}
       products.forEach((prod)=>{
         if(prod.quantity < prodIdQtyMap[prod.id]) {
-          throw new RpcException(`product with id: '${prod.id}' has quantity: '${prod.quantity}' which less than the requested amount: '${prodIdQtyMap[prod.id]}'`)
+          throw new RpcFailedPreConditionException(`product with id: '${prod.id}' has quantity: '${prod.quantity}' which less than the requested amount: '${prodIdQtyMap[prod.id]}'`)
         }
         existingIdMap[prod.id] = prod
       })
@@ -156,7 +156,7 @@ export class ProductsService implements OnModuleInit {
         }
       })
 
-      throw new RpcException(`products with following id were not exist: ${lostIds.join(", ")}`)
+      throw new RpcNotFoundException(`products with following id were not exist: ${lostIds.join(", ")}`)
     }
     
     const updateRes = await this.productRepository
