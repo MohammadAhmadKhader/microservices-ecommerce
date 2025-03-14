@@ -60,3 +60,7 @@ func formatDSN(user, pass, host, port, dbname string) string {
 func GetMysqlDSN() string {
 	return formatDSN(Envs.DB_USER, Envs.DB_PASSWORD,Envs.DB_HOST, Envs.DB_PORT, Envs.DB_NAME)
 }
+
+func GetMysqlDSNWithoutDBName() string {
+	return formatDSN(Envs.DB_USER, Envs.DB_PASSWORD,Envs.DB_HOST, Envs.DB_PORT, "")
+}

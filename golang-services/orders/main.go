@@ -10,6 +10,8 @@ import (
 	"net"
 
 	_ "github.com/joho/godotenv/autoload"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
@@ -21,20 +23,23 @@ var (
 	TelemetryAddr = common.EnvString("TELEMETRY_ADDR", "localhost:4318")
 )
 
-func main() {
+var tracer trace.Tracer
 
+func main() {
 	ctx := context.Background()
-	tracer, err := common.InitTracer(ctx, TelemetryAddr, serviceName)
+	tracerProvider, err := common.InitTracer(ctx, TelemetryAddr, serviceName)
 	if err != nil {
 		log.Println(err)
 	}
-	defer tracer.Shutdown(ctx)
+	defer tracerProvider.Shutdown(ctx)
+	serviceTracer := tracerProvider.Tracer("orders-service")
+	tracer = serviceTracer
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
-
 	common.GrpcInitMetrics(grpcServer)
 
 	listener, err := net.Listen("tcp", grpcAddr)
@@ -57,6 +62,7 @@ func main() {
 	defer registry.Deregister(ctx, instanceId)
 
 	gateway := gateway.NewGateway(registry)
+	DB := InitDB()
 	store := NewStore(DB)
 	service := NewService(store, gateway)
 	serviceWithOtel := NewTelemetryMiddleware(service)

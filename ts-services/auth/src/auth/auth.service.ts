@@ -5,16 +5,19 @@ import { comparePassword, hashPassword } from '../auth/utils/hash';
 import { handleObservable } from '@ms/common/utils';
 import {getRedisGrpcService, getUsersGrpcService} from "@ms/common/grpc"
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
+import { TraceMethod } from './telemetry';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 
 @Injectable()
 export class AuthService {
   constructor(@Inject(ConsulService) private registryService: ConsulService) {}
 
+  @TraceMethod()
   async login(email:string, password: string): Promise<LoginResponse> {
     const usersService = await this.getUsersService()
 
     const userByEmailResp = await handleObservable(usersService.FindOneUserByEmail({email}))
-    const user = (userByEmailResp as any).user
+    const user = userByEmailResp?.user
     if (!user) {
       throw new BadRequestException("wrong email or password")
     }
@@ -30,13 +33,18 @@ export class AuthService {
     return {user, sessionId: createSessionResponse.session.id};
   }
 
+  @TraceMethod()
   async regist(email:string, password: string, firstName: string, lastName:string): Promise<RegistResponse> {
+    const span = trace.getActiveSpan()
     const usersService = await this.getUsersService()
 
     const userByEmailResp = await handleObservable(usersService.FindOneUserByEmail({email}))
     const user = userByEmailResp.user
     if (user) {
-      throw new BadRequestException("User with such email already exists")
+      const errMsg = "User with such email already exists"
+      span.setAttribute("error", true)
+      span.setAttribute("error.message", errMsg)
+      throw new BadRequestException(errMsg)
     }
 
     const hashedPassword = hashPassword(password)
@@ -49,7 +57,10 @@ export class AuthService {
 
     const createdUser = createUserResponse.user
     if (!createdUser) {
-      throw new InternalServerErrorException("An unexpected error has occurred during creating user")
+      const errMsg = "An unexpected error has occurred during creating user"
+      span.setAttribute("error", true)
+      span.setAttribute("error.message", errMsg)
+      throw new InternalServerErrorException(errMsg)
     }
     
     const redisService = await this.getRedisService()
@@ -59,9 +70,11 @@ export class AuthService {
       throw new InternalServerErrorException(`${createSessionResponse.message}`)
     }
 
+    span.setStatus({code: SpanStatusCode.OK})
     return {user: createdUser, sessionId: createSessionResponse.session.id};
   }
 
+  @TraceMethod()
   async resetPassword(userId:number, oldPassword: string, newPassword: string, confirmNewPassword: string): Promise<EmptyBody> {
     // this logic must be moved to outside to a validator
     if (oldPassword == newPassword) {
@@ -86,6 +99,7 @@ export class AuthService {
     return {};
   }
 
+  @TraceMethod()
   async validateSession(sessionId: string): Promise<AuthValidateSessionResponse> {
     const redisService = await this.getRedisService()
     const validateSessionResponse = await handleObservable(redisService.ValidateSession({sessionId:sessionId}))
@@ -110,7 +124,6 @@ export class AuthService {
 
   private async getUsersService(){
     const usersGrpcAddr = await this.registryService.discover("users")
-    console.log(usersGrpcAddr)
     return getUsersGrpcService(usersGrpcAddr).getService()
   }
 }

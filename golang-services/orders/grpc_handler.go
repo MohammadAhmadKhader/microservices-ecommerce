@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"ms/common/broker"
@@ -12,6 +11,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 )
 
@@ -29,11 +29,25 @@ func NewGrpcHandler(grpcServer *grpc.Server, service OrdersService, amqpChan *am
 	pb.RegisterOrderServiceServer(grpcServer, handler)
 }
 
-func (h *grpcHandler) GetOrderById(ctx context.Context, orderReq *pb.GetOrderByIdRequest) (*pb.GetOrderByIdResponse, error) {
-	tracer := otel.Tracer("GetOrderById GrpcHandler")
+func (h *grpcHandler) GetOrders(ctx context.Context, ordersReq *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
 	ctx, span := tracer.Start(ctx, "GetOrderById GrpcHandler")
-	span.AddEvent(fmt.Sprintf("Order Id: %v", orderReq.GetID()))
 	defer span.End()
+	ordersResp, err := h.service.GetOrders(ctx, ordersReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return ordersResp, nil
+}
+
+
+func (h *grpcHandler) GetOrderById(ctx context.Context, orderReq *pb.GetOrderByIdRequest) (*pb.GetOrderByIdResponse, error) {
+	ctx, span := tracer.Start(ctx, "GetOrderById GrpcHandler")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.Int("order.id", int(orderReq.GetID())),
+	)
 
 	order, err := h.service.GetOrderById(ctx, orderReq)
 	if err != nil {

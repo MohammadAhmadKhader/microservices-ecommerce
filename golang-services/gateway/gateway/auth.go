@@ -44,11 +44,12 @@ func (g *AuthGateway) Register(ctx context.Context, registReq *pb.RegistRequest)
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	registResponse, err := authClient.Regist(context.Background(), registReq)
+	registResponse, err := authClient.Regist(ctx, registReq)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+	
 
 	return registResponse, err
 }

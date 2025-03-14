@@ -11,17 +11,28 @@ import (
 	"ms/gateway/gateway"
 
 	_ "github.com/joho/godotenv/autoload"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	serviceName ="gateway"
+	serviceName = "gateway"
 	httpAddr           = common.EnvString("HTTP_ADDR", ":3000")
 	pormHost           = common.EnvString("PORM_HOST", "")
 	pormPort           = common.EnvString("PORM_HOST", "")
+	TelemetryAddr = common.EnvString("TELEMETRY_ADDR", "localhost:4318")
 )
+
+var tracer trace.Tracer
 
 func main() {
 	ctx := context.Background()
+	tracerProvider, err := common.InitTracer(ctx, TelemetryAddr, serviceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t := tracerProvider.Tracer("gateway")
+	tracer = t
 
 	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, httpAddr)
 	if err != nil {

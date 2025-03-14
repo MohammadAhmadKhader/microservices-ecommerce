@@ -3,12 +3,14 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { HealthModule } from '@ms/common/modules/health/health.module';
+import { TraceModule, UsersTelemtrySubsecriber } from './users/telemetry';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
+    TraceModule,
     UsersModule,
     HealthModule,
-    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type:"mysql",
       database: process.env.DB_NAME,
@@ -19,6 +21,7 @@ import { HealthModule } from '@ms/common/modules/health/health.module';
       autoLoadEntities:true,
       logging:true,
       synchronize:true,
+      subscribers:[UsersTelemtrySubsecriber]
     }),
     ],
   controllers: [],

@@ -28,6 +28,13 @@ func (l *LoggingMiddleware) loggingHandler(start time.Time, handlerName string) 
 	l.logger.Info().Str("handler", handlerName).Dur("duration", time.Since(start)).Msg("")
 }
 
+func (l *LoggingMiddleware) GetOrders(ctx context.Context, pb *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+	start := time.Now()
+	defer l.loggingHandler(start, "GetOrders")
+
+	return l.service.GetOrders(ctx, pb)
+}
+
 func (l *LoggingMiddleware) GetOrderById(ctx context.Context, pb *pb.GetOrderByIdRequest) (*pb.Order, error) {
 	start := time.Now()
 	defer l.loggingHandler(start, "GetOrderById")

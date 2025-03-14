@@ -23,6 +23,12 @@ func (t *TelemetryMiddleware) telemetryHandler(ctx context.Context, event string
 	span.AddEvent(event, options...)
 }
 
+func (t *TelemetryMiddleware) GetOrders(ctx context.Context, pb *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+	defer t.telemetryHandler(ctx, fmt.Sprintf("GetOrders: %v", pb))
+
+	return t.service.GetOrders(ctx, pb)
+}
+
 func (t *TelemetryMiddleware) GetOrderById(ctx context.Context, pb *pb.GetOrderByIdRequest) (*pb.Order, error) {
 	defer t.telemetryHandler(ctx, fmt.Sprintf("GetOrderById: %v", pb))
 

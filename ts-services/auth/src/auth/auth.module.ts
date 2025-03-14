@@ -2,10 +2,9 @@ import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { ConfigModule} from '@nestjs/config';
 import {v4 as uuid} from "uuid"
 @Module({
-  imports:[ConfigModule.forRoot()],
+  imports:[],
   controllers: [AuthController],
   providers: [AuthService,{
     provide:ConsulService,

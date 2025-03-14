@@ -5,6 +5,9 @@ import (
 	"ms/common"
 	pb "ms/common/generated"
 	"slices"
+
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func GetUnmatchedIds(productsIds []int32, prods []*pb.Product) (Ids string) {
@@ -42,4 +45,9 @@ func CollectProductsIds(pb *pb.CreateOrderRequest) []int {
 	}
 
 	return productsIds
+}
+
+func HandleSpanErr(span *trace.Span, err error) {
+	(*span).SetStatus(codes.Error, err.Error())
+    (*span).RecordError(err)
 }

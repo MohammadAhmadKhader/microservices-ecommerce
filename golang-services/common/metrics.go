@@ -27,10 +27,6 @@ var (
 		Buckets: prometheus.DefBuckets,
 	},
 		[]string{"method", "endpoint"})
-	testCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "test_request_count",
-		Help: "testing ",
-	})
 )
 
 func GrpcInitMetrics(server *grpc.Server) {

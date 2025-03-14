@@ -1,3 +1,5 @@
+
+SHELL := cmd.exe
 generate:
 	@IF EXIST "generated" rmdir /s /q "generated"
 	@mkdir "generated"

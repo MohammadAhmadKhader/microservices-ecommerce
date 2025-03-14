@@ -30,7 +30,6 @@ export class ProductsController {
     const carrier= metadata.getMap()
     const ctx = propagation.extract(context.active(), carrier)
     console.log(ctx, "context")
-    ctx.getValue
     return this.productsService.findProductsByIds(data.Ids, metadata);
   }
 

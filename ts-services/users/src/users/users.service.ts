@@ -10,14 +10,19 @@ export class UsersService {
   constructor(@InjectRepository(User) private usersRepository: Repository<User>){}
 
   async create(createDto: CreateUserRequest) {
-    const IsUserExist = (await this.usersRepository.findOneBy({email:createDto.email})) != null
+    const lowerCaseEmail = createDto.email.toLowerCase()
+    const IsUserExist = await this.usersRepository.exists({where:{email: lowerCaseEmail}})
     if (IsUserExist) {
       throw new BadRequestException("user with this email already exist")
     }
 
-    const createdUser = this.usersRepository.create(createDto)
-    createdUser.email = createdUser.email.toLocaleLowerCase()
-    const user = await this.usersRepository.save(createdUser)
+    const createdUser = this.usersRepository.create({...createDto, email: lowerCaseEmail})
+    const operationType: UserOperations = "USER_CREATION"
+    const user = await this.usersRepository.save(createdUser, {
+      data:{
+        operationType
+      }
+    })
 
     if (user) {
       user.createdAt = toProtobufTimestamp(user.createdAt)

@@ -28,7 +28,7 @@ func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequ
 	}
 
 	ordersClient := pb.NewOrderServiceClient(conn)
-	validationResponse, err := ordersClient.CreateOrder(context.Background(), req)
+	validationResponse, err := ordersClient.CreateOrder(ctx, req)
 	if err != nil {
 		log.Println(err)
 		return nil, err

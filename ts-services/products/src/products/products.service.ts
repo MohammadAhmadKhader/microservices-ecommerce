@@ -9,9 +9,10 @@ import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
 import { RpcException } from '@nestjs/microservices';
-import {TraceMethod} from "@ms/common/observability/telemetry"
-import {MethodLogger} from "@ms/common/observability/logger"
+import { MethodLogger} from "@ms/common/observability/logger"
 import { Metadata } from '@grpc/grpc-js';
+import { trace } from '@opentelemetry/api';
+import { serviceTracer, TraceMethod } from './telemtry';
 @Injectable()
 export class ProductsService implements OnModuleInit {
   constructor(
@@ -31,17 +32,30 @@ export class ProductsService implements OnModuleInit {
     await broker.addConsumer(dlqConsumer)
   }
 
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
-  async create(createProductDto: CreateProductDto): Promise<Product> {
+  async create(createProductDto: CreateProductDto): Promise<ProductProtobuf> {
+    const span = trace.getActiveSpan()
+    if (span) {
+      span.setAttribute('payload', JSON.stringify(createProductDto));
+    }
+
     const product = await this.productRepository.save(createProductDto)
-    return product;
+
+    return new ProductProtobuf(product)
   }
 
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
   async findAll(page:number, limit:number): Promise<FindAllResponse> {
-    const skip = page * limit
+    const span = trace.getActiveSpan()
+
+    if (span) {
+      span.setAttribute('page', page);
+      span.setAttribute('limit', limit);
+    }
+    
+    const skip = (page - 1) * limit
     const [products, count] = await this.productRepository.findAndCount({
       order:{
         createdAt:-1
@@ -50,6 +64,8 @@ export class ProductsService implements OnModuleInit {
       skip:skip
     })
 
+    span.setAttribute("db.rowCount", products.length)
+
     const productsProtobufs = products.map((product)=>{
       return new ProductProtobuf(product)
     })
@@ -57,7 +73,7 @@ export class ProductsService implements OnModuleInit {
     return {page, limit, count:count,products:productsProtobufs as any};
   }
 
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
   async findOne(id: number): Promise<Product> {
     const product = await this.productRepository.findOneBy({
@@ -72,7 +88,7 @@ export class ProductsService implements OnModuleInit {
   }
 
   
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
   async findProductsByIds(Ids: number[], metadata: Metadata): Promise<FindProductsByIdsResponse> {
     const products = await this.productRepository.find({
@@ -88,7 +104,7 @@ export class ProductsService implements OnModuleInit {
     return {products: protobufsProducts as unknown as Product[]}
   }
 
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
   async update(id: number, updateProductDto: Partial<UpdateProductDto>) : Promise<Product> {
     const product = await this.productRepository.findOneBy({id})
@@ -106,7 +122,7 @@ export class ProductsService implements OnModuleInit {
     await this.productRepository.delete(id)
   }
 
-  @TraceMethod(ProductsService.name)
+  @TraceMethod()
   @MethodLogger()
   async updateStock(productsIdsWithQty : UpdateStocksParams){
     const prodIdQtyMap = {}

@@ -11,9 +11,9 @@ type ProductResponse struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func ConvertProductToResponse(product pb.Product) ProductResponse {
+func ConvertProductToResponse(product *pb.Product) ProductResponse {
 	return ProductResponse{
-		Product:   product,
+		Product:   *product,
 		UpdatedAt: product.UpdatedAt.AsTime(),
 		CreatedAt: product.CreatedAt.AsTime(),
 	}

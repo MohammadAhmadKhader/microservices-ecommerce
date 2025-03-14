@@ -8,5 +8,12 @@ run-dev:
 run-prod:
 	bash ./start-prod.sh
 
-run-ts:
-	nest start auth redis users 
+# run-ts:
+# 	nest start auth redis users
+
+build:
+	@cd ts-services/users && npm i
+	@cd ts-services/redis && npm i
+	@cd ts-services/common && npm i
+	@cd ts-services/products && npm i
+	@cd ts-services/auth && npm i

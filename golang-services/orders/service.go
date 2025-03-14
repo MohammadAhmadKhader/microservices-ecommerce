@@ -9,7 +9,6 @@ import (
 	"ms/orders/models"
 	"ms/orders/utils"
 
-	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -25,22 +24,44 @@ func NewService(store OrdersStore, productsGateway *gateway.Gateway) *service {
 	}
 }
 
+func (s *service) GetOrders(ctx context.Context, p *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+	ctx, span := tracer.Start(ctx, "GetOrders OrdersService")
+	defer span.End()
+
+	protoOrders :=  make([]*pb.Order, 0)
+	orders, err := s.store.GetOrders(ctx, int(p.GetPage()), int(p.GetLimit()))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, order := range orders {
+		protoOrders = append(protoOrders, order.ToProto())
+	}
+
+	resp := &pb.GetOrdersResponse{
+		Page: p.GetPage(),
+		Limit: p.GetLimit(),
+		Count: int32(len(orders)),
+		Orders: protoOrders,
+	}
+
+	return resp, nil
+}
+
 func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
 	var productIds = []int32{}
 	for _, item := range p.Items {
 		productIds = append(productIds, item.ID)
 	}
 
-	tracer := otel.Tracer("products-tracer")
-
 	headers := common.InjectMetadataIntoContext(ctx)
 
 	tracingCtx, span := tracer.Start(ctx, "ProductsGateway - GetProductsFromIds")
 	defer span.End()
-	
 
 	injectedCtx := metadata.NewOutgoingContext(tracingCtx, metadata.New(headers))
 	span.AddEvent("Sending request to productsGateway")
+
 	_, err := s.productsGateway.GetProductsFromIds(injectedCtx, productIds)
 	if err != nil {
 		return nil, err
@@ -81,6 +102,9 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 }
 
 func (s *service) GetOrderById(ctx context.Context, p *pb.GetOrderByIdRequest) (*pb.Order, error) {
+	ctx, span := tracer.Start(ctx, "GetOrderById OrdersService")
+	defer span.End()
+
 	order, err := s.store.GetOnePopulatedOrder(ctx, int(p.ID))
 	if err != nil {
 		return nil, err

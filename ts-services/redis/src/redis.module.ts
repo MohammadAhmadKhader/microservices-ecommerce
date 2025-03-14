@@ -6,9 +6,13 @@ import { Redis } from 'ioredis';
 import { HealthModule } from '@ms/common/modules/health/health.module';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
+import { TraceModule } from './telemetry';
 
 @Module({
-  imports: [ConfigModule.forRoot(),HealthModule],
+  imports: [
+    ConfigModule.forRoot(),
+    TraceModule,
+    HealthModule],
   controllers: [RedisController],
   providers: [RedisService, {
     provide:"REDIS_CLIENT",
@@ -17,9 +21,7 @@ import {v4 as uuid} from "uuid"
         host:process.env.REDIS_HOST,
         port: Number(process.env.REDIS_PORT),
         password:process.env.REDIS_PASSWORD,
-        tls:{
-          rejectUnauthorized:true
-        }
+        db:0
       })
       return redis
     }

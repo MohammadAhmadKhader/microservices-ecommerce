@@ -1,9 +1,10 @@
-.PHONY: protos
+.PHONY: protos generate
 # you need to run "make protos" twice, for each run it copy one of the directories
 protos:
 	@robocopy ../../protos ./dist/protos *.proto
 	@robocopy ../../protos ./protos *.proto
 
+SHELL := cmd.exe
 generate:
 	@IF EXIST "generated" rmdir /s /q "generated"
 	@mkdir "generated"
