@@ -9,7 +9,6 @@ import (
 	productsTypes "ms/gateway/types/products"
 	"ms/orders/utils"
 	"net/http"
-	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -66,10 +65,9 @@ func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Reques
 	ctx, span := tracer.Start(r.Context(), "HandleGettingProductById Gateway")
 	defer span.End()
 
-	productIdAsStr := r.PathValue("id")
-	productId, err := strconv.Atoi(productIdAsStr)
+	productId, err := GetPathValueAsInt(r, "id")
 	if err != nil {
-		err := fmt.Sprintf("invalid product id received: '%v'", productIdAsStr)
+		err := fmt.Sprintf("invalid product id received: '%v'", productId)
 		common.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -114,10 +112,9 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "HandleUpdateProduct Gateway")
 	defer span.End()
 
-	productIdAsStr := r.PathValue("id")
-	productId, err := strconv.Atoi(productIdAsStr)
+	productId, err := GetPathValueAsInt(r, "id")
 	if err != nil {
-		errStr := fmt.Sprintf("invalid product id received: '%v'", productIdAsStr)
+		errStr := fmt.Sprintf("invalid product id received: '%v'", productId)
 		utils.HandleSpanErr(&span, errors.New(errStr))
 		common.WriteError(w, http.StatusBadRequest, errStr)
 		return
@@ -149,17 +146,16 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.WriteJSON(w, http.StatusAccepted, map[string]any{"product": product})
+	common.WriteJSON(w, http.StatusAccepted, map[string]any{"product": productsTypes.ConvertProductToResponse(product)})
 }
 
 func (h *handler) HandleDeleteOneProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "HandleDeleteOneProduct Gateway")
 	defer span.End()
 
-	productIdAsStr := r.PathValue("id")
-	productId, err := strconv.Atoi(productIdAsStr)
+	productId, err := GetPathValueAsInt(r, "id")
 	if err != nil {
-		errStr := fmt.Sprintf("invalid product id received: '%v'", productIdAsStr)
+		errStr := fmt.Sprintf("invalid product id received: '%v'", productId)
 		utils.HandleSpanErr(&span, errors.New(errStr))
 		common.WriteError(w, http.StatusBadRequest, errStr)
 		return

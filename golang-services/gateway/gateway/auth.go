@@ -27,7 +27,7 @@ func (g *AuthGateway) ValidateSession(ctx context.Context, sessionId string) (*p
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	validationResponse, err := authClient.ValidateSession(context.Background(), &pb.ValidateSessionRequest{SessionId: sessionId})
+	validationResponse, err := authClient.ValidateSession(ctx, &pb.ValidateSessionRequest{SessionId: sessionId})
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -62,7 +62,7 @@ func (g *AuthGateway) Login(ctx context.Context, loginReq *pb.LoginRequest) (*pb
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	loginResponse, err := authClient.Login(context.Background(), loginReq)
+	loginResponse, err := authClient.Login(ctx, loginReq)
 	if err != nil {
 		log.Println(err)
 		return nil, err

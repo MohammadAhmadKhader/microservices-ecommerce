@@ -3,7 +3,7 @@ import {GetTraceMethodDecorator, initTracing} from "@ms/common/observability/tel
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
-import { Span, Tracer } from "@opentelemetry/api";
+import { Span, SpanStatusCode, Tracer } from "@opentelemetry/api";
 import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
 import { User } from "./entities/user.entity";
 import { AfterQueryEvent, BeforeQueryEvent } from "typeorm/subscriber/event/QueryEvent";
@@ -40,10 +40,10 @@ export class UsersTelemtrySubsecriber implements EntitySubscriberInterface<User>
     beforeQuery(event: BeforeQueryEvent<User>): Promise<any> | void {
       const opType: UserOperations = event.queryRunner.data.operationType
       const span = serviceTracer.startSpan('database-query');
-      
+      span.setAttribute('db.statement', event.query);
+
       if(opType === "USER_CREATION" || opType === "USER_LOGIN") {
         span.setAttribute('db.operationType', opType);
-        span.setAttribute('db.statement', event.query);
 
         if (opType === "USER_CREATION" && event.parameters && typeof event.parameters[0] !== "number") {
             const redactedParameters = structuredClone(event.parameters) as UserCreationParameters
@@ -72,20 +72,22 @@ export class UsersTelemtrySubsecriber implements EntitySubscriberInterface<User>
         
 
       } else {
-        const span = serviceTracer.startSpan('database-query');
-        span.setAttribute('db.statement', event.query);
         span.setAttribute('db.parameters', JSON.stringify(event.parameters || []))
       }
 
       const spanId = crypto.randomUUID();
       event.queryRunner.data.customQuerySpanId = spanId
-      this.spansMap.set(spanId, span);
+      this.spansMap.set(spanId, span)
     }
 
     afterQuery(event: AfterQueryEvent<User>): Promise<any> | void {
       const spanId = event.queryRunner.data.customQuerySpanId
       const span = this.spansMap.get(spanId);
       if (span) {
+        if(event.error) {
+          span.setAttribute("error", true)
+          span.setAttribute("error.message", event.error?.message)
+        }
         span.end();
         this.spansMap.delete(spanId);
       }

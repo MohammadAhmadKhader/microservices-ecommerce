@@ -36,3 +36,37 @@ func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequ
 
 	return validationResponse, err
 }
+
+func (o *OrdersGateway) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	ordersClient := pb.NewOrderServiceClient(conn)
+	validationResponse, err := ordersClient.GetOrders(ctx, req)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return validationResponse, err
+}
+
+func (o *OrdersGateway) GetOrderById(ctx context.Context, req *pb.GetOrderByIdRequest) (*pb.GetOrderByIdResponse, error) {
+	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	ordersClient := pb.NewOrderServiceClient(conn)
+	validationResponse, err := ordersClient.GetOrderById(ctx, req)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return validationResponse, err
+}

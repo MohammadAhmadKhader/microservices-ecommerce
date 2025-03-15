@@ -6,7 +6,8 @@ import ServiceConfig from './auth/auth.config';
 async function bootstrap() {
   try {
     const config = ServiceConfig()
-    const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    const mainApp = await NestFactory.create(AppModule)
+    mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
         package: ['auth', 'grpc.health.v1'],
@@ -15,7 +16,8 @@ async function bootstrap() {
       },
     });
     
-    await app.listen()
+    await mainApp.startAllMicroservices()
+    await mainApp.listen(config.metricsPort ,config.serviceHost)
     
     console.log(`auth service connected at ${config.servicePort}`)
   }catch(err) {

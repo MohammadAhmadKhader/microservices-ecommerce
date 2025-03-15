@@ -5,8 +5,9 @@ import { join } from 'path';
 import ServiceConfig from './redis.config';
 
 async function bootstrap() {
-  const config = ServiceConfig()
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(RedisModule, {
+    const config = ServiceConfig()
+    const mainApp = await NestFactory.create(RedisModule)
+    mainApp.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options:{
       package:["grpc.health.v1","redis"],
@@ -15,7 +16,8 @@ async function bootstrap() {
     }
   });
 
-  await app.listen();
+  await mainApp.startAllMicroservices()
+  await mainApp.listen(config.metricsPort ,config.serviceHost)
 
   console.log(`Redis service is listening at port ${config.servicePort}`)
 }

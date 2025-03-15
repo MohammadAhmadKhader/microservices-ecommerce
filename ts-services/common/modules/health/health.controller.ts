@@ -10,7 +10,7 @@ export class HealthController {
 
   @GrpcMethod(HealthService, "Check")
   check(req: HealthCheckRequest): HealthCheckResponse {
-   // console.log("health checking")
+    console.log("health checking")
     return { status:HealthCheckResponse_ServingStatus.SERVING};
   }
 }

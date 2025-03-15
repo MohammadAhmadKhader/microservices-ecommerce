@@ -33,7 +33,7 @@ export class TraceModule {
 }
 
 @EventSubscriber()
-export class ProductSubscriber implements EntitySubscriberInterface<Product> {
+export class ProductTelemetrySubscriber implements EntitySubscriberInterface<Product> {
     private spansMap = new Map<string, Span>()
     
     beforeQuery(event: BeforeQueryEvent<Product>): Promise<any> | void {
@@ -50,6 +50,10 @@ export class ProductSubscriber implements EntitySubscriberInterface<Product> {
       const spanId = event.queryRunner.data.customQuerySpanId
       const span = this.spansMap.get(spanId);
       if (span) {
+        if(event.error) {
+          span.setAttribute("error", true)
+          span.setAttribute("error.message", event.error?.message)
+        }
         span.end();
         this.spansMap.delete(spanId);
       }

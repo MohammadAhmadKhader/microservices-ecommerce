@@ -30,7 +30,7 @@ func NewGrpcHandler(grpcServer *grpc.Server, service OrdersService, amqpChan *am
 }
 
 func (h *grpcHandler) GetOrders(ctx context.Context, ordersReq *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
-	ctx, span := tracer.Start(ctx, "GetOrderById GrpcHandler")
+	ctx, span := tracer.Start(ctx, "GetOrders GrpcHandler")
 	defer span.End()
 	ordersResp, err := h.service.GetOrders(ctx, ordersReq)
 	if err != nil {

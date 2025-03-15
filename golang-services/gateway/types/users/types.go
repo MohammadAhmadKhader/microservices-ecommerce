@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type RegisterResponsec struct {
+type User struct {
 	ID int32 `json:"id"`
 	FirstName string    `json:"firstName"`
 	LastName string `json:"lastName"`
@@ -14,8 +14,8 @@ type RegisterResponsec struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func ConvertUserToResponse(user *pb.User) RegisterResponsec {
-	return RegisterResponsec{
+func ConvertUserToResponse(user *pb.User) User {
+	return User{
 		ID: user.Id,
 		FirstName: user.FirstName,
 		LastName: user.LastName,
@@ -23,4 +23,28 @@ func ConvertUserToResponse(user *pb.User) RegisterResponsec {
 		UpdatedAt: user.UpdatedAt.AsTime(),
 		CreatedAt: user.CreatedAt.AsTime(),
 	}
+}
+
+func (u *User) GetID() int32 {
+	return u.ID
+}
+
+func (u *User) GetFirstName() string {
+	return u.FirstName
+}
+
+func (u *User) GetLastName() string {
+	return u.LastName
+}
+
+func (u *User) GetEmail() string {
+	return u.Email
+}
+
+func (u *User) GetUpdatedAt() time.Time {
+	return u.UpdatedAt
+}
+
+func (u *User) GetCreatedAt() time.Time {
+	return u.CreatedAt
 }

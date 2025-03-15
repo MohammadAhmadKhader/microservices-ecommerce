@@ -14,6 +14,6 @@ type ServiceRegistry interface {
 	Discover(ctx context.Context, serviceName string) ([]string, error)
 }
 
-func GenInstanceId(service string, ) string {
+func GenInstanceId(service string) string {
 	return fmt.Sprintf("%v-%v", service, rand.New(rand.NewSource(time.Now().Unix())).Int())
 }

@@ -2,7 +2,9 @@ echo "Starting all services in production mode..."
 
 BASE_DIR=$(pwd)
 
-start bash -c "consul.exe agent -dev"
+start bash -c "consul agent -dev"
+start bash -c "jaeger"
+start bash -c "run-prometheus.bat"
 (cd $BASE_DIR/ts-services/products && make run-prod) &
 (cd $BASE_DIR/ts-services/auth && make run-prod) &
 (cd $BASE_DIR/ts-services/redis && make run-prod) &

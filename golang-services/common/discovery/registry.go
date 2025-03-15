@@ -78,7 +78,7 @@ func (r *Registry) Discover(ctx context.Context, serviceName string) ([]string, 
 
 	services := []string{}
 	for _, entry := range servicesEntries {
-		hostPort := fmt.Sprintf("%v:%v", entry.Node.Address, entry.Service.Port)
+		hostPort := fmt.Sprintf("%v:%v", entry.Service.Address, entry.Service.Port)
 		services = append(services, hostPort)
 	}
 

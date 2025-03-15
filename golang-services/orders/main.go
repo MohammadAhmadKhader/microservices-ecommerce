@@ -19,30 +19,39 @@ import (
 
 var (
 	serviceName   = "orders"
-	grpcAddr      = common.EnvString("GRPC_ADDR", "localhost:2000")
-	TelemetryAddr = common.EnvString("TELEMETRY_ADDR", "localhost:4318")
+	serviceHost      = common.EnvString("SERVICE_HOST", "127.0.0.2")
+	metricsPort      = common.EnvString("METRICS_PORT", "127.0.0.2")
+	servicePort      = common.EnvString("SERVICE_PORT", "3001")
+	serviceAddr  	 = serviceHost+":"+servicePort
+	telemetryHost    = common.EnvString("TELEMETRY_HOST", "localhost")
+	telemetryPort	 = common.EnvString("TELEMETRY_PORT", "4318")
+	telemetryAddr    = telemetryHost+":"+telemetryPort
 )
 
 var tracer trace.Tracer
 
 func main() {
 	ctx := context.Background()
-	tracerProvider, err := common.InitTracer(ctx, TelemetryAddr, serviceName)
+	tracerProvider, err := common.InitTracer(ctx, telemetryAddr, serviceName)
 	if err != nil {
 		log.Println(err)
 	}
 	defer tracerProvider.Shutdown(ctx)
-	serviceTracer := tracerProvider.Tracer("orders-service")
+	serviceTracer := tracerProvider.Tracer(serviceName)
 	tracer = serviceTracer
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+		grpc.ChainUnaryInterceptor(
+			grpc_prometheus.UnaryServerInterceptor,
+			common.GrpcMetricsInterceptor(serviceName),
+		),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 	common.GrpcInitMetrics(grpcServer)
+	common.CreateHttpMetricsAndInit(serviceHost, metricsPort)
 
-	listener, err := net.Listen("tcp", grpcAddr)
+	listener, err := net.Listen("tcp", serviceAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +63,7 @@ func main() {
 		amqpChan.Close()
 	}()
 
-	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, grpcAddr)
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +82,7 @@ func main() {
 
 	NewGrpcHandler(grpcServer, serviceWithLogging, amqpChan)
 
-	log.Println("listening on port: ", grpcAddr)
+	log.Println("listening on address: ", serviceAddr)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatal(err)
 	}

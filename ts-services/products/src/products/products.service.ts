@@ -4,14 +4,14 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product, ProductProtobuf } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
-import { FindAllResponse, FindProductsByIdsResponse } from '@ms/common/generated/products'
+import { FindAllResponse, FindProductsByIdsResponse,  } from '@ms/common/generated/products'
 import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
 import { MethodLogger} from "@ms/common/observability/logger"
 import { Metadata } from '@grpc/grpc-js';
 import { trace } from '@opentelemetry/api';
-import { serviceTracer, TraceMethod } from './telemtry';
+import { serviceTracer, TraceMethod } from './telemetry';
 import {RpcFailedPreConditionException, RpcNotFoundException} from "@ms/common/rpcExceprions"
 @Injectable()
 export class ProductsService implements OnModuleInit {
@@ -75,7 +75,7 @@ export class ProductsService implements OnModuleInit {
 
   @TraceMethod()
   @MethodLogger()
-  async findOne(id: number): Promise<Product> {
+  async findOne(id: number): Promise<ProductProtobuf> {
     const product = await this.productRepository.findOneBy({
       id,
     })
@@ -84,13 +84,13 @@ export class ProductsService implements OnModuleInit {
     }
    
     const productResponse = product.ConvertToProtobufType()
-    return productResponse as any;
+    return productResponse;
   }
 
   
   @TraceMethod()
   @MethodLogger()
-  async findProductsByIds(Ids: number[], metadata: Metadata): Promise<FindProductsByIdsResponse> {
+  async findProductsByIds(Ids: number[]): Promise<FindProductsByIdsResponse> {
     const products = await this.productRepository.find({
       where :{
         id : In(Ids)
@@ -106,7 +106,7 @@ export class ProductsService implements OnModuleInit {
 
   @TraceMethod()
   @MethodLogger()
-  async update(id: number, updateProductDto: Partial<UpdateProductDto>) : Promise<Product> {
+  async update(id: number, updateProductDto: Partial<UpdateProductDto>) : Promise<ProductProtobuf> {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
       throw new RpcNotFoundException(`product with id ${id} was not found`)
@@ -115,7 +115,7 @@ export class ProductsService implements OnModuleInit {
     Object.assign(product, updateProductDto)
     await this.productRepository.save(product)
 
-    return product;
+    return new ProductProtobuf(product);
   }
 
   async remove(id: number): Promise<void> {

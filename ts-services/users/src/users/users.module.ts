@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,14 +7,17 @@ import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
 import { ConfigModule } from '@nestjs/config';
 import ServiceConfig from "./users.config"
+import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
+import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
 
-export let EnvsConfig: EnvConfig
+export const appServicesMap = new Map<string, any>()
 
 @Module({
   imports:[
     ConfigModule.forRoot({
       load:[ServiceConfig]
     }),
+    MetricsModule,
     TypeOrmModule.forFeature([User])],
   controllers: [UsersController],
   providers: [UsersService, {
@@ -37,4 +40,12 @@ export let EnvsConfig: EnvConfig
   }],
   exports:[UsersService]
 })
-export class UsersModule {}
+export class UsersModule implements OnModuleInit{
+  constructor(private readonly metricsService: MetricsService) {
+
+  }
+
+  onModuleInit() {
+    appServicesMap.set(MetricsService.name, this.metricsService)
+  }
+}

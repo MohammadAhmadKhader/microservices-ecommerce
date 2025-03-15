@@ -59,7 +59,7 @@ export class RedisService {
     const span = trace.getActiveSpan()
     try {
       span.setAttribute("sessionId", sessionId)
-      const sessionStr = await this.redisClient.get(sessionId)
+      const sessionStr = await this.redisClient.get(`${this.formayRedisKeyForSessions(sessionId)}`)
       const session = JSON.parse(sessionStr) as Session
 
       span.setAttribute("session", JSON.stringify(session))
@@ -81,13 +81,14 @@ export class RedisService {
   async validateSession(sessionId: string): Promise<AuthValidateSessionResponse> {
     const span = trace.getActiveSpan()
     try {
-      const sessionStr = await this.redisClient.get(sessionId)
+      const sessionStr = await this.redisClient.get(`${this.formayRedisKeyForSessions(sessionId)}`)
       const session = JSON.parse(sessionStr) as Session
 
       span.setAttribute("session", null)
       span.setAttribute("sessionId", sessionId)
 
-      if (new Date() > new Date(session.expiresAt)) {
+      console.log(session, )
+      if (!session || new Date() > new Date(session.expiresAt)) {
         const invalidResponse = { message:"session has expired", success:false, session: null }
         span.setAttribute("error", true)
         span.setAttribute("error.message", invalidResponse.message)

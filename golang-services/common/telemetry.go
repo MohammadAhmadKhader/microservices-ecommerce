@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"os"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -23,7 +24,13 @@ func InitTracer(ctx context.Context, endpoint string, serviceName string) (*trac
 		return nil, err
 	}
 
+	samplingRatio := 1.0
+	if os.Getenv("env") == "production" {
+		samplingRatio = 0.1
+	}
+
 	provider := trace.NewTracerProvider(
+		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRatio))),
 		trace.WithBatcher(exporter),
 		trace.WithSpanProcessor(trace.NewBatchSpanProcessor(exporter)),
 		trace.WithResource(resource.NewWithAttributes(
@@ -34,7 +41,6 @@ func InitTracer(ctx context.Context, endpoint string, serviceName string) (*trac
 			semconv.MessagingProtocolKey.String("AMQP"),
 			semconv.ServiceNameKey.String(serviceName),
 		)),
-
 	)
 
 	otel.SetTracerProvider(provider)

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { RedisController } from './redis.controller';
 import { RedisService } from './redis.service';
 import { ConfigModule } from '@nestjs/config';
@@ -7,20 +7,27 @@ import { HealthModule } from '@ms/common/modules/health/health.module';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
 import { TraceModule } from './telemetry';
+import ServiceConfig from './redis.config';
+import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
+import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
+
+export const appServicesMap = new Map<string, any>()
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TraceModule,
-    HealthModule],
+    HealthModule,
+    MetricsModule],
   controllers: [RedisController],
   providers: [RedisService, {
     provide:"REDIS_CLIENT",
     useFactory:() => {
+      const serviceConfig = ServiceConfig()
       const redis = new Redis({
-        host:process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT),
-        password:process.env.REDIS_PASSWORD,
+        host: serviceConfig.redisHost,
+        port: serviceConfig.redisPort,
+        password: serviceConfig.redisPassword,
         db:0
       })
       return redis
@@ -29,20 +36,27 @@ import { TraceModule } from './telemetry';
     provide:ConsulService,
     useFactory: async ()=>{ 
       const serviceId = uuid()
-      
+      const serviceConfig = ServiceConfig()
       return new ConsulService({
         serviceId: serviceId,
         serviceName: 'redis',
-        serviceHost: process.env.SERVICE_HOST,
-        servicePort: Number(process.env.SERVICE_PORT), 
+        serviceHost: serviceConfig.serviceHost,
+        servicePort: serviceConfig.servicePort, 
         checkName:"redis-check",
         timeout:"1s",
         deregisterCriticalServiceAfter:"5s",
-        checkGrpcHost:`${process.env.SERVICE_HOST}:${Number(process.env.SERVICE_PORT)}`,
+        checkGrpcHost: serviceConfig.serviceUrl,
         interval:"10s",
         checkId: serviceId,
       })
     }
   }],
 })
-export class RedisModule {}
+export class RedisModule implements OnModuleInit{
+  constructor(private readonly metricsService: MetricsService) {
+
+  }
+  onModuleInit() {
+      appServicesMap.set(MetricsService.name, this.metricsService)
+  }
+}

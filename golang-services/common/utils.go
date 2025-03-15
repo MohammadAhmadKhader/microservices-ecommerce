@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -22,7 +23,7 @@ const (
 	maxLimit     = 100
 )
 
-func GetPagination(r *http.Request) (int32, int32, error) {
+func GetPagination(r *http.Request) (Page int32, Limit int32,err error) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		return 0, 0, err
@@ -60,25 +61,45 @@ func WriteJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func ReadJSON(r *http.Request, data interface{}) error {
-	return json.NewDecoder(r.Body).Decode(data)
+	err := json.NewDecoder(r.Body).Decode(data)
+	if err != nil && err.Error() == "EOF" {
+		return fmt.Errorf("body is empty")
+	}
+	return err
 }
 
 func WriteError(w http.ResponseWriter, status int, message string) {
 	WriteJSON(w, status, map[string]string{"error": message})
 }
 
-func HandleGrpcErr(err error, status *status.Status, w http.ResponseWriter, customStatus *int) {
-	if status.Code() != codes.InvalidArgument {
-		var returnedStatus = http.StatusBadRequest
-		if customStatus != nil {
-			returnedStatus = *customStatus
-		}
+func IsExpectedCode(code codes.Code) bool {
+	return code == codes.InvalidArgument || 
+	code == codes.AlreadyExists || code == codes.NotFound || 
+	code == codes.PermissionDenied || code == codes.FailedPrecondition ||
+	code == codes.Unauthenticated
+}
 
+var StatusCodesMap = map[codes.Code]int{
+	codes.PermissionDenied: http.StatusUnauthorized,
+	codes.Unauthenticated: http.StatusForbidden,
+	codes.AlreadyExists: http.StatusBadRequest,
+	codes.InvalidArgument: http.StatusBadRequest,
+	codes.NotFound: http.StatusBadRequest,
+	codes.FailedPrecondition: http.StatusPreconditionFailed,
+}
+func MapRpcCodesToHttpCodes(rpcCode codes.Code) (httpStatusCode int) {
+	httpStatusCode = StatusCodesMap[rpcCode]
+	return httpStatusCode
+}
+
+func HandleGrpcErr(err error, status *status.Status, w http.ResponseWriter, customStatus *int) {
+	if IsExpectedCode(status.Code()) {
+		returnedStatus := MapRpcCodesToHttpCodes(status.Code())
 		WriteError(w, returnedStatus, status.Message())
 		return
 	}
 
-	WriteError(w, http.StatusInternalServerError, err.Error())
+	WriteError(w, http.StatusInternalServerError, "internal server error")
 }
 
 func InjectMetadataIntoContext(ctx context.Context) HeadersCarrier {
@@ -86,6 +107,16 @@ func InjectMetadataIntoContext(ctx context.Context) HeadersCarrier {
 	otel.GetTextMapPropagator().Inject(ctx, carrier)
 
 	return carrier
+}
+
+func CopyProto[TProto proto.Message](loginPayload TProto) (TProto, error) {
+	pMsg := proto.Clone(loginPayload)
+	var casted, ok = pMsg.(TProto)
+	if !ok {
+		return *new(TProto), fmt.Errorf("invalid proto.Message")
+	}
+
+	return casted, nil
 }
 
 func ServiceIPGetter(ctx context.Context) (string, error) {

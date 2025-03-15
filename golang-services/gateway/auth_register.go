@@ -13,8 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// auth
-
 func (h *handler) authRegister(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/login", h.HandleLogin)
 	mux.HandleFunc("POST /api/auth/register", h.HandleRegist)
@@ -23,7 +21,7 @@ func (h *handler) authRegister(mux *http.ServeMux) {
 func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "HandleLogin Gateway")
 	defer span.End()
-	
+
 	var loginPayload pb.LoginRequest
 	err := common.ReadJSON(r, &loginPayload)
 	if err != nil {
@@ -31,11 +29,18 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	var copyLoginPayload = loginPayload
-	copyLoginPayload.Password = "[REDACTED]"
-	span.SetAttributes(attribute.Stringer("payload", &copyLoginPayload))
 
-	loginResponse, err := h.authGateway.Login(ctx, &pb.LoginRequest{Email: loginPayload.Email, Password: loginPayload.Password})
+	copyLoginPayload, err := common.CopyProto(&loginPayload)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	copyLoginPayload.Password = "[REDACTED]"
+	span.SetAttributes(attribute.Stringer("payload", copyLoginPayload))
+
+	loginResponse, err := h.authGateway.Login(ctx, &loginPayload)
 	rStatus := status.Convert(err)
 	if rStatus != nil {
 		utils.HandleSpanErr(&span, err)
@@ -50,7 +55,9 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.WriteJSON(w, http.StatusOK, map[string]any{"user": loginResponse.User})
+	userResp := usersTypes.ConvertUserToResponse(loginResponse.User)
+
+	common.WriteJSON(w, http.StatusOK, map[string]any{"user": userResp})
 }
 
 func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
@@ -64,14 +71,22 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	registPayloadClone := registPayload
+
+	registPayloadClone, err := common.CopyProto(&registPayload)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	registPayloadClone.Password = "[REDACTED]"
-	span.SetAttributes(attribute.Stringer("payload", &registPayloadClone))
+	span.SetAttributes(attribute.Stringer("payload", registPayloadClone))
 
 	loginResponse, err := h.authGateway.Register(ctx, &registPayload)
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+		rStatus := status.Convert(err)
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 

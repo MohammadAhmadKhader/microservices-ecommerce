@@ -7,7 +7,8 @@ import ServiceConfig from "./users/users.config"
 async function bootstrap() {
   try {
     const config = ServiceConfig()
-    const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    const mainApp = await NestFactory.create(AppModule)
+    mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
         package: ['grpc.health.v1','users'],
@@ -16,7 +17,8 @@ async function bootstrap() {
       },
     });
     
-    await app.listen()
+    await mainApp.startAllMicroservices()
+    await mainApp.listen(config.metricsPort ,config.serviceHost)
     
     console.log(`users service connected at ${config.servicePort}`)
   }catch(err) {

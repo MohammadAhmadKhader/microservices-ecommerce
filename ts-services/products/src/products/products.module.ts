@@ -1,20 +1,20 @@
 import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
 import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit, SetMetadata } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { Product } from './entities/product.entity';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
+import ServiceConfig from './products.config';
+
+export const appServicesMap = new Map<string, any>()
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product]),
-    MetricsModule.register(new MetricsService({
-      name:"products_service_calls_counter",
-      help:"products service calls counters",
-    })),
+    MetricsModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService,
@@ -22,15 +22,16 @@ import {v4 as uuid} from "uuid"
     provide: ConsulService,
     useFactory:()=>{
       const serviceId = uuid()
+      const serviceConfig = ServiceConfig()
       return new ConsulService({
         serviceId: serviceId,
         serviceName: "products",
-        serviceHost: process.env.SERVICE_HOST,
-        servicePort: Number(process.env.SERVICE_PORT), 
+        serviceHost: serviceConfig.serviceHost,
+        servicePort: serviceConfig.servicePort, 
         checkName:"products-check",
         timeout:"1s",
         deregisterCriticalServiceAfter:"5s",
-        checkGrpcHost:`${process.env.SERVICE_HOST}:${Number(process.env.SERVICE_PORT)}`,
+        checkGrpcHost: serviceConfig.serviceUrl,
         interval:"10s",
         checkId: serviceId,
       })
@@ -38,4 +39,11 @@ import {v4 as uuid} from "uuid"
   }
 ],
 })
-export class ProductsModule {}
+export class ProductsModule implements OnModuleInit{
+  constructor(private readonly metricsService: MetricsService) {
+
+  }
+  onModuleInit() {
+    appServicesMap.set(MetricsService.name, this.metricsService)
+  }
+}
