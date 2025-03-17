@@ -1,7 +1,7 @@
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
-import { GetTraceMethodDecorator, initTracing } from '@ms/common/observability/telemetry';
+import { initTracing } from '@ms/common/observability/telemetry';
 import { Module } from '@nestjs/common';
 import { context, Span, trace, Tracer } from '@opentelemetry/api';
 import { AfterQueryEvent, BeforeQueryEvent } from 'typeorm/subscriber/event/QueryEvent';
@@ -19,7 +19,6 @@ function initTracingInstruments(provider: NodeTracerProvider) {
     });
 }
 const PRODUSTS_TRACER_NAME = "products-service"
-export const TraceMethod = GetTraceMethodDecorator()
 
 @Module({})
 export class TraceModule {

@@ -27,32 +27,30 @@ export function initTracing(serviceName: string) {
     return provider
 }
 
-export function GetTraceMethodDecorator() {
-    return function() {
-        return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-            const method = descriptor.value
+export function TraceMethod() {
+    return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+        const method = descriptor.value
 
-            descriptor.value = async function(...args:any[]) {
-                const span = trace.getActiveSpan()
-                span.setAttribute("handler", propertyKey)
+        descriptor.value = async function(...args:any[]) {
+            const span = trace.getActiveSpan()
+            span.setAttribute("handler", propertyKey)
 
-                try {
-                    const result = await method.apply(this, args)
-                    span.setStatus({
-                        code: SpanStatusCode.OK
-                    })
-                    return result 
-                } catch (error : any) {
-                    span.setAttribute("error", true)
-                    span.setAttribute("error.message", error.message)
+            try {
+                const result = await method.apply(this, args)
+                span.setStatus({
+                    code: SpanStatusCode.OK
+                })
+                return result
 
-                    throw error
-                } finally {
-                    span.end()
-                }
+            } catch (error : any) {
+                span.setAttribute("error", true)
+                span.setAttribute("error.message", error.message)
+                throw error
+
+            } finally {
+                span.end()
             }
-
-            return descriptor
         }
+        return descriptor
     }
 }

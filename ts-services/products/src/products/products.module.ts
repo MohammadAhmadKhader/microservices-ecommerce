@@ -1,15 +1,12 @@
 import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
-import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Module, OnModuleInit, SetMetadata } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { Product } from './entities/product.entity';
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
 import ServiceConfig from './products.config';
-
-export const appServicesMap = new Map<string, any>()
 
 @Module({
   imports: [
@@ -37,13 +34,5 @@ export const appServicesMap = new Map<string, any>()
       })
     }
   }
-],
-})
-export class ProductsModule implements OnModuleInit{
-  constructor(private readonly metricsService: MetricsService) {
-
-  }
-  onModuleInit() {
-    appServicesMap.set(MetricsService.name, this.metricsService)
-  }
-}
+]})
+export class ProductsModule {}

@@ -6,7 +6,7 @@ option go_package = "ms/gateway/pb";
 service OrderService {
     rpc GetOrderById(GetOrderByIdRequest) returns (GetOrderByIdResponse);
     rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
-    rpc CreateOrder(CreateOrderRequest) returns (Order);
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
     rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
 }
 
@@ -50,7 +50,7 @@ message GetOrdersResponse {
     int32 Page = 1;
     int32 Limit = 2;
     int32 Count = 3;
-    Order Order = 4;
+    repeated Order Orders = 4;
 }
 
 message UpdateOrderStatusRequest {

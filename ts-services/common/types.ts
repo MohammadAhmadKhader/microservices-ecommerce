@@ -5,7 +5,7 @@ import { CheckOptions } from "consul/lib/agent/check";
 import { RegisterOptions } from "consul/lib/agent/service";
 import { Observable } from "rxjs"
 import { UsersService } from "./generated/users"
-import { SessionsService } from "./generated/redis"
+import { RedisService } from "./generated/redis"
 import { ProductsService } from "./generated/products"
 import { OrderService } from "./generated/orders"
 import { AuthService } from "./generated/auth"
@@ -59,11 +59,11 @@ export type ObservableService<T> = {
 };
 
 export type ObservableUsersService = ObservableService<UsersService>
-export type ObservableSessionsService = ObservableService<SessionsService>
+export type ObservableSessionsService = ObservableService<RedisService>
 export type ObservableProductsService = ObservableService<ProductsService>
 export type ObservableOrdersService = ObservableService<OrderService>
 export type ObservableAuthService = ObservableService<AuthService>
 
 // TODO: rename SessionsService to Redis
-export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "SessionsService"
+export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "RedisService"
 export type RegistryServiceName = "products" | "auth" | "orders" | "users" | "gateway" | "redis" 

@@ -2,8 +2,9 @@ package gateway
 
 import (
 	"context"
-	"fmt"
+	"log"
 
+	"ms/common"
 	"ms/common/discovery"
 	pb "ms/common/generated"
 	"ms/orders/utils"
@@ -22,8 +23,9 @@ func NewGateway(registry *discovery.Registry) *Gateway {
 func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) ([]*pb.Product, error) {
 	conn, err := discovery.ConnectService(ctx, "products", g.registry)
 	if err != nil {
-		err := fmt.Errorf("an error has ocurred during connection with products service: %v", err.Error())
-		return nil, err
+		log.Printf("an error has ocurred during connection with products service: %v\n", err.Error())
+		
+		return nil, common.ErrInternal()
 	}
 	defer conn.Close()
 
@@ -31,13 +33,14 @@ func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32) (
 
 	resp, err := productsService.FindProductsByIds(ctx, &pb.FindProductsByIdsRequest{Ids: productsIds})
 	if err != nil {
-		return nil, err
+		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
 	if len(resp.Products) != len(productsIds) {
 		idsStr := utils.GetUnmatchedIds(productsIds, resp.Products)
+		log.Printf("order was not able to be created, products with the following ids: '%s' were not found\n", idsStr)
 
-		return nil, fmt.Errorf("order was not able to be created, products with the following ids: '%s' were not found", idsStr)
+		return nil, common.ErrInternal()
 	}
 
 	return resp.Products, nil

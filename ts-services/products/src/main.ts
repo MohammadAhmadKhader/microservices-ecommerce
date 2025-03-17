@@ -3,11 +3,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import ServiceConfig from "./products/products.config"
+import { ConsoleLogger } from '@nestjs/common';
 
 async function bootstrap() {
   try {
     const config = ServiceConfig()
-    const mainApp = await NestFactory.create(AppModule)
+    const appLogger = new ConsoleLogger()
+    const mainApp = await NestFactory.create(AppModule, {
+      logger: appLogger
+    })
+    mainApp.useLogger(appLogger)
     mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {

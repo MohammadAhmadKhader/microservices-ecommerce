@@ -37,7 +37,7 @@ func (h *handler) HandleGettingAllProducts(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	findAllResp, err := h.productsGateway.Find(ctx, &pb.FindAll{
+	findAllResp, err := h.productsGateway.Find(ctx, &pb.FindAllProductsRequest{
 		Page:  page,
 		Limit: limit,
 	})
@@ -73,7 +73,7 @@ func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Reques
 	}
 	span.SetAttributes(attribute.Int("product.id", productId))
 
-	product, err := h.productsGateway.FindOne(ctx, &pb.Id{
+	resp, err := h.productsGateway.FindOne(ctx, &pb.FindOneProductRequest{
 		Id: int32(productId),
 	})
 
@@ -82,14 +82,14 @@ func (h *handler) HandleGettingProductById(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	common.WriteJSON(w, http.StatusOK, map[string]any{"product": productsTypes.ConvertProductToResponse(product)})
+	common.WriteJSON(w, http.StatusOK, map[string]any{"product": productsTypes.ConvertProductToResponse(resp.Product)})
 }
 
 func (h *handler) HandleCreateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "HandleCreateProduct Gateway")
 	defer span.End()
 
-	var createPayload pb.CreateProduct
+	var createPayload pb.CreateProductRequest
 	err := common.ReadJSON(r, &createPayload)
 	if err != nil {
 		HandleSpanErr(&span, err)
@@ -98,14 +98,14 @@ func (h *handler) HandleCreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	span.SetAttributes(attribute.Stringer("payload", &createPayload))
 	
-	product, err := h.productsGateway.Create(ctx, &createPayload)
+	resp, err := h.productsGateway.Create(ctx, &createPayload)
 	if err != nil {
 		HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	common.WriteJSON(w, http.StatusCreated, map[string]any{"product": productsTypes.ConvertProductToResponse(product)})
+	common.WriteJSON(w, http.StatusCreated, map[string]any{"product": productsTypes.ConvertProductToResponse(resp.Product)})
 }
 
 func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +121,7 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	span.SetAttributes(attribute.Int("product.id", productId))
 
-	var updateProduct pb.UpdateProduct
+	var updateProduct pb.UpdateProductRequest
 	err = common.ReadJSON(r, &updateProduct)
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
@@ -129,7 +129,7 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload = &pb.UpdateProduct{
+	var payload = &pb.UpdateProductRequest{
 		Id: int32(productId), 
 		Name: updateProduct.Name,
 		Description: updateProduct.Description,
@@ -139,14 +139,14 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	span.SetAttributes(attribute.Stringer("payload", payload))
 	
-	product, err := h.productsGateway.Update(ctx, payload)
+	resp, err := h.productsGateway.Update(ctx, payload)
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	common.WriteJSON(w, http.StatusAccepted, map[string]any{"product": productsTypes.ConvertProductToResponse(product)})
+	common.WriteJSON(w, http.StatusAccepted, map[string]any{"product": productsTypes.ConvertProductToResponse(resp.Product)})
 }
 
 func (h *handler) HandleDeleteOneProduct(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func (h *handler) HandleDeleteOneProduct(w http.ResponseWriter, r *http.Request)
 	}
 	span.SetAttributes(attribute.Int("product.id", productId))
 	
-	_, err = h.productsGateway.DeleteOne(ctx, &pb.Id{Id: int32(productId)})
+	_, err = h.productsGateway.DeleteOne(ctx, &pb.DeleteOneProductRequest{Id: int32(productId)})
 	if err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return

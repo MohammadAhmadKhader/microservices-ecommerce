@@ -24,12 +24,12 @@ export function getRandomInt(min:number, max:number){
 }
 
 export function extractMetadataFromArgs(target:string, propertyKey:string, args: any[]) {
-    const paramsTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey)
     let metadata: Metadata
 
-    paramsTypes.forEach((type, index) => {
-       if(type?.name === "Metadata") {
+    args.forEach((type, index) => {
+        if(type?.name === "Metadata") {
             metadata = args[index]
+            console.log(metadata)
        }
     });
 
@@ -40,3 +40,4 @@ export function extractTraceParent(target:string, propertyKey:string,...args: an
     const metadata = extractMetadataFromArgs(target, propertyKey, args)
     return metadata?.get('traceparent')?.[0];
 }
+

@@ -5,9 +5,9 @@ import { comparePassword, hashPassword } from '../auth/utils/hash';
 import { handleObservable } from '@ms/common/utils';
 import {getRedisGrpcService, getUsersGrpcService} from "@ms/common/grpc"
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
-import { TraceMethod } from './telemetry';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { RpcAlreadyExistsException, RpcInternalException, RpcInvalidArgumentException, RpcUnauthorizedException } from "@ms/common/rpcExceprions"
+import { TraceMethod } from '@ms/common/observability/telemetry';
 
 @Injectable()
 export class AuthService {

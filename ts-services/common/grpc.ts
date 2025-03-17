@@ -32,7 +32,7 @@ export const getProductsGrpcService = (grpcUrl: string, protoPath = join(__dirna
 }
 
 export const getRedisGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/redis.proto")) => {
-  return new CreateGrpcService<ObservableSessionsService>(grpcUrl, protoPath, "redis", "SessionsService")
+  return new CreateGrpcService<ObservableSessionsService>(grpcUrl, protoPath, "redis", "RedisService")
 }
 
 export const getUsersGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/users.proto")) => {

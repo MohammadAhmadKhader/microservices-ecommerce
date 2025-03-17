@@ -3,8 +3,8 @@ import Redis from "ioredis"
 import { CreateSessionResponse, DeleteSessionResponse, GetSessionResponse, Session, AuthValidateSessionResponse } from '@ms/common/generated/redis';
 import {v4 as uuid} from "uuid"
 import { toProtobufTimestamp} from "@ms/common/utils"
-import { TraceMethod } from './telemetry';
 import { trace } from '@opentelemetry/api';
+import { TraceMethod } from '@ms/common/observability/telemetry';
 
 @Injectable()
 export class RedisService {

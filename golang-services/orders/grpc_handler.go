@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"ms/common"
 	"ms/common/broker"
 	pb "ms/common/generated"
 	"ms/orders/models"
@@ -34,7 +35,7 @@ func (h *grpcHandler) GetOrders(ctx context.Context, ordersReq *pb.GetOrdersRequ
 	defer span.End()
 	ordersResp, err := h.service.GetOrders(ctx, ordersReq)
 	if err != nil {
-		return nil, err
+		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
 	return ordersResp, nil
@@ -51,7 +52,7 @@ func (h *grpcHandler) GetOrderById(ctx context.Context, orderReq *pb.GetOrderByI
 
 	order, err := h.service.GetOrderById(ctx, orderReq)
 	if err != nil {
-		return nil, err
+		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
 	orderResp := &pb.GetOrderByIdResponse{Order: order}
@@ -59,19 +60,25 @@ func (h *grpcHandler) GetOrderById(ctx context.Context, orderReq *pb.GetOrderByI
 	return orderResp, nil
 }
 
-func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderRequest) (*pb.Order, error) {
+func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
 	tracer := otel.Tracer("CreateOrder GrpcHandler")
 	ctx, span := tracer.Start(ctx, "CreateOrder GrpcHandler")
 	defer span.End()
 
-	return h.service.CreateOrder(ctx, orderReq)
+	order, err := h.service.CreateOrder(ctx, orderReq)
+	if err != nil {
+		return nil, common.CheckGrpcErrorOrInternal(err)
+	}
+
+	orderResp := &pb.CreateOrderResponse{Order: order}
+
+	return orderResp, nil
 }
 
 func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.UpdateOrderStatusRequest) (*pb.UpdateOrderStatusResponse, error) {
 	order, err := h.service.UpdateOrderStatus(ctx, orderReq)
 	if err != nil {
-		log.Println(err)
-		return nil, err
+		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
 	sentOrder := models.Order{
@@ -96,7 +103,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 	marshalledOrder, err := json.Marshal(sentOrder)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, common.ErrInternal()
 	}
 
 	orderResp := &pb.UpdateOrderStatusResponse{Order: order}
@@ -110,7 +117,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, common.CheckGrpcErrorOrInternal(err)
 		}
 	}
 

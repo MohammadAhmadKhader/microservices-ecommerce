@@ -1,5 +1,6 @@
 protos:
-	robocopy ..\..\protos .\src\protos *.proto
+	bash -c "mkdir -p ./src/protos" && \
+	bash -c "cp -r ../../protos/*.proto ./src/protos/"
 
 run-prod:
 	npm run start

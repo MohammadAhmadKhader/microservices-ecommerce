@@ -5,11 +5,13 @@ import { User } from './entities/user.entity';
 import {toProtobufTimestamp} from "@ms/common/utils"
 import { CreateUserRequest, FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
 import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
+import { TraceMethod } from '@ms/common/observability/telemetry';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectRepository(User) private usersRepository: Repository<User>){}
 
+  @TraceMethod()
   async create(createDto: CreateUserRequest) {
     const lowerCaseEmail = createDto.email.toLowerCase()
     const IsUserExist = await this.usersRepository.exists({where:{email: lowerCaseEmail}})
@@ -33,6 +35,7 @@ export class UsersService {
     return { user };
   }
 
+  @TraceMethod()
   async findAll(page : number, limit : number) : Promise<FindAllUsersResponse> {
     const count = await this.usersRepository.count()
     let users = await this.usersRepository.find()
@@ -44,6 +47,7 @@ export class UsersService {
     return {page, limit, count, users}
   }
 
+  @TraceMethod()
   async findOneById(id: number) {
     const user = await this.usersRepository.findOneBy({id})
     if (user) {
@@ -54,6 +58,7 @@ export class UsersService {
     return { user }
   }
 
+  @TraceMethod()
   async findOneByEmail(email: string) {
     const user = await this.usersRepository.findOneBy({email});
     if (user) {
@@ -63,6 +68,7 @@ export class UsersService {
     return { user }
   }
 
+  @TraceMethod()
   async update(req: UpdateUserRequest) {
     const {id, ...updateDto} = req
     const user = await this.usersRepository.findOneBy({id})
@@ -75,6 +81,7 @@ export class UsersService {
     return { user: createdUser }
   }
 
+  @TraceMethod()
   async remove(id: number) {
     await this.usersRepository.delete(id)
   }

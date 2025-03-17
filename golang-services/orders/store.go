@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"ms/common"
 	"ms/orders/models"
 	"ms/orders/utils"
 
@@ -39,6 +40,10 @@ func (s *store) GetOnePopulatedOrder(ctx context.Context, Id int) (*models.Order
 	err := s.DB.WithContext(ctx).Preload("OrderItems").First(&order, Id).Error
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrNotFound("order", Id)
+		}
+
 		return nil, err
 	}
 
@@ -63,6 +68,9 @@ func (s *store) GetOne(ctx context.Context, Id int) (*models.Order, error) {
 	err := s.DB.WithContext(ctx).First(&order, Id).Error
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrNotFound("order", Id)
+		}
 		return nil, err
 	}
 
@@ -91,7 +99,6 @@ func (s *store) GetOrders(ctx context.Context, page, limit int) ([]models.Order,
 		return nil, err
 	}
 
-	log.Println("after order returned")
 	span.SetAttributes(
         attribute.Int("orders.count", len(orders)),
     )
@@ -107,6 +114,10 @@ func (s *store) UpdateStatus(ctx context.Context, Id int, order *models.Order) (
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
 		return nil, err
+	}
+
+	if s.DB.RowsAffected == 0 {
+		return nil, common.ErrNotFound("order", Id)
 	}
 
 	return order, nil
@@ -179,7 +190,6 @@ func (s *store) UpdateStatusAndFetchItems(ctx context.Context, Id int, order *mo
 	})
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
-		log.Println(err)
 		return nil, err
 	}
 

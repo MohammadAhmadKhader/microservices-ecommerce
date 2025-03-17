@@ -22,7 +22,7 @@ var (
 			Name: "api_gateway_total_requests",
 			Help: "Total Requests on the api gateway",
 		},
-		[]string{"method", "endpoint", "status"},
+		[]string{"method", "endpoint", "status_code"},
 	)
 	gatewayRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "api_gateway_duration_seconds",

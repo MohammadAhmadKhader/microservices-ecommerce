@@ -8,9 +8,6 @@ import {v4 as uuid} from "uuid"
 import { ConfigModule } from '@nestjs/config';
 import ServiceConfig from "./users.config"
 import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
-import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
-
-export const appServicesMap = new Map<string, any>()
 
 @Module({
   imports:[
@@ -40,12 +37,4 @@ export const appServicesMap = new Map<string, any>()
   }],
   exports:[UsersService]
 })
-export class UsersModule implements OnModuleInit{
-  constructor(private readonly metricsService: MetricsService) {
-
-  }
-
-  onModuleInit() {
-    appServicesMap.set(MetricsService.name, this.metricsService)
-  }
-}
+export class UsersModule {}

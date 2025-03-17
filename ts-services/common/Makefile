@@ -1,8 +1,10 @@
 .PHONY: protos generate
-# you need to run "make protos" twice, for each run it copy one of the directories
+
 protos:
-	@robocopy ../../protos ./dist/protos *.proto
-	@robocopy ../../protos ./protos *.proto
+	bash -c "mkdir -p ./dist/protos ./protos" && \
+	bash -c "cp -r ../../protos/*.proto ./dist/protos/" && \
+	bash -c "cp -r ../../protos/*.proto ./protos/"
+
 
 SHELL := cmd.exe
 generate:

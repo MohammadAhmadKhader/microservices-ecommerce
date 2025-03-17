@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { GetTraceMethodDecorator, initTracing} from "@ms/common/observability/telemetry"
+import { initTracing} from "@ms/common/observability/telemetry"
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
@@ -15,7 +15,6 @@ function initTracingInstruments(provider: NodeTracerProvider) {
 export let serviceTracer: Tracer
 
 const REDIS_TRACER_NAME = "redis-service"
-export const TraceMethod = GetTraceMethodDecorator()
 
 @Module({})
 export class TraceModule {

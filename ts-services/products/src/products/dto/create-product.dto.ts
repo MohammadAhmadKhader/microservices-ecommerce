@@ -1,6 +1,7 @@
+import { CreateProductRequest } from "@ms/common/generated/products"
 import {IsNotEmpty, IsNumber, IsString} from "class-validator"
 
-export class CreateProductDto {
+export class CreateProductDto implements CreateProductRequest {
     @IsString({message:"name must be a string"})
     @IsNotEmpty({message:"name is required"})
     name:string

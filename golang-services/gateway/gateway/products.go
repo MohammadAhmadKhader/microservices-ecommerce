@@ -19,7 +19,7 @@ func NewProductsGateway(registry *discovery.Registry) *ProductsGateway {
 	}
 }
 
-func(p *ProductsGateway) FindOne(ctx context.Context, req *pb.Id) (*pb.Product, error) {
+func(p *ProductsGateway) FindOne(ctx context.Context, req *pb.FindOneProductRequest) (*pb.FindOneProductResponse, error) {
 	conn, err :=discovery.ConnectService(ctx, productsService, p.registry)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func(p *ProductsGateway) FindOne(ctx context.Context, req *pb.Id) (*pb.Product, 
 	return productsClient.FindOne(ctx, req)
 }
 
-func(p *ProductsGateway) Find(ctx context.Context, req *pb.FindAll) (*pb.FindAllResponse, error) {
+func(p *ProductsGateway) Find(ctx context.Context, req *pb.FindAllProductsRequest) (*pb.FindAllProductsResponse, error) {
 	conn, err :=discovery.ConnectService(ctx, productsService, p.registry)
 	if err != nil {
 		return nil, err
@@ -38,10 +38,10 @@ func(p *ProductsGateway) Find(ctx context.Context, req *pb.FindAll) (*pb.FindAll
 
 	productsClient := pb.NewProductsServiceClient(conn)
 
-	return productsClient.Find(ctx, req)
+	return productsClient.FindAll(ctx, req)
 }
 
-func(p *ProductsGateway) Create(ctx context.Context, req *pb.CreateProduct) (*pb.Product, error) {
+func(p *ProductsGateway) Create(ctx context.Context, req *pb.CreateProductRequest) (*pb.CreateProductResponse, error) {
 	conn, err :=discovery.ConnectService(ctx, productsService, p.registry)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func(p *ProductsGateway) Create(ctx context.Context, req *pb.CreateProduct) (*pb
 	return productsClient.Create(ctx, req)
 }
 
-func(p *ProductsGateway) Update(ctx context.Context, req *pb.UpdateProduct) (*pb.Product, error) {
+func(p *ProductsGateway) Update(ctx context.Context, req *pb.UpdateProductRequest) (*pb.UpdateProductResponse, error) {
 	conn, err :=discovery.ConnectService(ctx, productsService, p.registry)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func(p *ProductsGateway) Update(ctx context.Context, req *pb.UpdateProduct) (*pb
 	return productsClient.Update(ctx, req)
 }
 
-func(p *ProductsGateway) DeleteOne(ctx context.Context, req *pb.Id) (*pb.EmptyBody, error) {
+func(p *ProductsGateway) DeleteOne(ctx context.Context, req *pb.DeleteOneProductRequest) (*pb.EmptyBody, error) {
 	conn, err :=discovery.ConnectService(ctx, productsService, p.registry)
 	if err != nil {
 		return nil, err

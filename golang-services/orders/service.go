@@ -8,8 +8,6 @@ import (
 	"ms/orders/gateway"
 	"ms/orders/models"
 	"ms/orders/utils"
-
-	"google.golang.org/grpc/metadata"
 )
 
 type service struct {
@@ -49,27 +47,22 @@ func (s *service) GetOrders(ctx context.Context, p *pb.GetOrdersRequest) (*pb.Ge
 }
 
 func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
+	ctx, span := tracer.Start(ctx, "CreateOrder OrdersService")
+	defer span.End()
+	
 	var productIds = []int32{}
 	for _, item := range p.Items {
 		productIds = append(productIds, item.ID)
 	}
 
-	headers := common.InjectMetadataIntoContext(ctx)
-
-	tracingCtx, span := tracer.Start(ctx, "ProductsGateway - GetProductsFromIds")
-	defer span.End()
-
-	injectedCtx := metadata.NewOutgoingContext(tracingCtx, metadata.New(headers))
-	span.AddEvent("Sending request to productsGateway")
-
-	_, err := s.productsGateway.GetProductsFromIds(injectedCtx, productIds)
+	_, err := s.productsGateway.GetProductsFromIds(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
 	span.AddEvent("Returned response from productsGateway")
 	err = utils.ValidateOrder(p)
 	if err != nil {
-		return nil, err
+		return nil, common.ErrInvalidArgument(err.Error())
 	}
 
 	var orderItems = []models.OrderItem{}

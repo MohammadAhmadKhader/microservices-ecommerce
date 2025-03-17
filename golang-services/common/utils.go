@@ -146,3 +146,12 @@ func ServiceIPGetter(ctx context.Context) (string, error) {
 
 	return podIP, nil
 }
+
+func IsGrpcError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	_, ok := status.FromError(err)
+	return ok
+}

@@ -6,7 +6,7 @@ option go_package = "ms/gateway/pb";
 service OrderService {
     rpc GetOrderById(GetOrderByIdRequest) returns (GetOrderByIdResponse);
     rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
-    rpc CreateOrder(CreateOrderRequest) returns (Order);
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
     rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
 }
 

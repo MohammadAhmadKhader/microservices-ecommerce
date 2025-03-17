@@ -1,7 +1,6 @@
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
-import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import {v4 as uuid} from "uuid"
@@ -32,11 +31,4 @@ export const appServicesMap = new Map<string, any>()
     }
   }],
 })
-export class AuthModule implements OnModuleInit{
-  constructor(private readonly metricsSerivce: MetricsService) {
-
-  }
-  onModuleInit() {
-      appServicesMap.set(MetricsService.name, this.metricsSerivce)
-  }
-}
+export class AuthModule {}

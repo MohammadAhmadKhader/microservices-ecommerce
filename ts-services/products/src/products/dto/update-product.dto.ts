@@ -1,29 +1,16 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateProductDto } from './create-product.dto';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, ValidateIf } from 'class-validator';
+import { UpdateProductRequest } from '@ms/common/generated/products';
 
-export class UpdateProductDto extends PartialType(CreateProductDto) {
+export class UpdateProductDto extends PartialType(CreateProductDto, {
+  skipNullProperties: false
+}) implements Partial<UpdateProductRequest> {
   @IsNotEmpty({message:"id is required"})
   @IsNumber({}, {message:"id must be a number"})
   id: number;
-  
-  @IsOptional()
-  @IsString()
-  name?: string;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsNumber({}, { message: 'quantity must be a number' })
-  quantity?: number;
-
-  @IsOptional()
-  @IsNumber({}, { message: 'price must be a number' })
-  price?: number;
-
-  @IsOptional()
-  @IsNumber({}, { message: 'category id must be a number' })
-  categoryId?: number;
+  @ValidateIf((o) => !Object.keys(o).some((key) => key !== 'id'))
+  @IsNotEmpty({ message: 'at least one field must be updated' })
+  dummyField?: string;
 }

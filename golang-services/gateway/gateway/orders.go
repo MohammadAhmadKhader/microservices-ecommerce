@@ -20,7 +20,7 @@ func NewOrdersGateway(registry *discovery.Registry) *OrdersGateway {
 	}
 }
 
-func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.Order, error) {
+func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
 	if err != nil {
 		log.Println(err)
