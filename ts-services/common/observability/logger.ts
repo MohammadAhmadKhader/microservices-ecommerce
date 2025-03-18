@@ -1,8 +1,9 @@
 import winston from "winston"
-import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor, Logger } from "@nestjs/common"
-import { catchError, finalize, map, Observable } from "rxjs"
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common"
+import { catchError, map, Observable } from "rxjs"
 import { Metadata } from "@grpc/grpc-js"
-import { Reflector } from "@nestjs/core"
+import { getMethodAndServiceNameFromArgs } from '../utils';
+import { trace, context as telemtryContext } from "@opentelemetry/api";
 
 const logFormat = winston.format.combine(
     winston.format.timestamp(),
@@ -57,6 +58,10 @@ export function redactSensitiveData(data: any, sensitiveKeys: string[]) {
         if(redactedClone[key] !== undefined) {
             redactedClone[key] = "[REDACTED]"
         }
+
+        if(redactedClone["user"] && redactedClone["user"].password) {
+            redactedClone.user.password = "[REDACTED]"
+        }
     }
 
     return redactedClone
@@ -64,30 +69,69 @@ export function redactSensitiveData(data: any, sensitiveKeys: string[]) {
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-    @Inject(Logger)
-    private logger: Logger
   constructor(private readonly redactedKeys: string[] = []) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const args = context.getArgs();
-    const metadata = context.switchToRpc().getContext() as Metadata
-
-    const traceparent = metadata.get('traceparent')?.[0]
     const redactedData = redactSensitiveData(args[0], this.redactedKeys)
 
-    console.log(redactedData, {traceparent})
-    console.log(this.logger)
-    logger.info(`${context.getHandler()} method`, { args: redactedData || args })
+    const {trace , traceparent} = getCurrTraceAndTraceParent(context) || { trace: 'Unknown', traceparent: 'Unknown' }
+    const {serviceName, methodName} = getMethodAndServiceNameFromArgs(context.getArgs())
+    const start = performance.now()
 
+    logger.info(`service call started`, { 
+        args: redactedData || args,
+        service: serviceName,
+        method: methodName,
+        traceparent,
+        trace,
+        durationMs: getDurationMS(start)
+     })
+    
     return next.handle().pipe(
       map((res)=>{
-        logger.info(`received: ${res}`)
+        let loggedRes: any
+        if(this.redactedKeys.length > 0) {
+            loggedRes = redactSensitiveData(structuredClone(res), this.redactedKeys)
+        } else {
+            loggedRes = res
+        }
+
+        logger.info(`service call ended`, {
+            result: loggedRes || {},
+            service: serviceName,
+            method: methodName,
+            traceparent,
+            trace,
+            durationMs: getDurationMS(start)
+        })
+
         return res
       }),
       catchError((error) => {
-        logger.error(error.message)
+        logger.error("error occured", {
+            service: serviceName,
+            method: methodName,
+            error: error.stack,
+            message: error.message,
+            trace,
+            traceparent
+        })
         throw error
       })
     )
   }
+}
+
+function getCurrTraceAndTraceParent(ctx: ExecutionContext) {
+    const metadata = ctx.switchToRpc().getContext() as Metadata
+    const traceparent = metadata.get('traceparent')?.[0]
+    const activeSpan = trace.getSpan(telemtryContext.active());
+    const currentTrace = activeSpan?.spanContext().traceId;
+
+    return { traceparent, trace: currentTrace}
+}
+
+function getDurationMS(start: number) {
+    return (performance.now() - start).toFixed(2)
 }

@@ -1,8 +1,8 @@
-import { ServerWritableStreamImpl } from '@grpc/grpc-js/build/src/server-call';
 import { MetricsService } from './metrics.service';
 import {status as grpcStatus} from "@grpc/grpc-js"
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
 import { catchError, finalize, Observable } from 'rxjs';
+import { getMethodAndServiceNameFromArgs } from '../../utils';
 
 @Injectable()
 export class GrpcMetricsInterceptor implements NestInterceptor {
@@ -12,7 +12,7 @@ export class GrpcMetricsInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const args = context.getArgs();
-    const {methodName, serviceName} = getMethodAndServiceName(args)
+    const {methodName, serviceName} = getMethodAndServiceNameFromArgs(args)
     
     const startTime = performance.now();
     let statusCode = grpcStatus[grpcStatus.OK]
@@ -29,19 +29,5 @@ export class GrpcMetricsInterceptor implements NestInterceptor {
         this.metricsService.observeDuration(serviceName, methodName, durationInSeconds);
       })
     )
-  }
-}
-
-
-function getMethodAndServiceName(args: any[]) {
-  const serviceWritableStreamImpl = args[2] as ServerWritableStreamImpl<any, any>
-  const path = serviceWritableStreamImpl.getPath()
-  const splittedPath = path.split("/")
-  const methodName = splittedPath[splittedPath.length - 1]
-  const serviceName = splittedPath[splittedPath.length - 2].split(".")[1]
-
-  return {
-    methodName,
-    serviceName
   }
 }

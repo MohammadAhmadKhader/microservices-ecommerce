@@ -1,35 +1,44 @@
-import { Controller, UseInterceptors} from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors} from '@nestjs/common';
 import { RedisService } from './redis.service';
 import { GrpcMethod } from '@nestjs/microservices';
-import { CreateSessionRequest, CreateSessionResponse, DeleteSessionRequest, 
-  DeleteSessionResponse, GetSessionRequest, GetSessionResponse,
-   AuthValidateSessionRequest, AuthValidateSessionResponse } from '@ms/common/generated/redis';
+import { CreateSessionResponse,DeleteSessionResponse , GetSessionResponse,AuthValidateSessionResponse } from '@ms/common/generated/redis';
 import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
+import { LoggingInterceptor } from "@ms/common/observability/logger"
+import { CreateSessionDto } from './protos/dto/create-session.dto';
+import { ValidateGrpcPayload } from "@ms/common/decorators"
+import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './protos/dto/get-session.dto';
+import {GenericExceptionFilter} from "@ms/common/exceptionFilters"
 
 const ServiceName = "RedisService"
 
-@UseInterceptors(GrpcMetricsInterceptor) 
+@UseFilters(GenericExceptionFilter)
+@UseInterceptors(GrpcMetricsInterceptor)
+@UseInterceptors(new LoggingInterceptor())
 @Controller()
 export class RedisController {
   constructor(private readonly redisService: RedisService) {}
 
   @GrpcMethod(ServiceName, "CreateSession")
-  async createSession(req : CreateSessionRequest): Promise<CreateSessionResponse> {
-    return await this.redisService.createSession(req.userId);
+  @ValidateGrpcPayload(CreateSessionDto)
+  async createSession(req : CreateSessionDto): Promise<CreateSessionResponse> {
+    return await this.redisService.createSession(req);
   }
 
   @GrpcMethod(ServiceName, "GetSession")
-  async getSession(req : GetSessionRequest): Promise<GetSessionResponse> {
-    return await this.redisService.getSession(req.sessionId);
+  @ValidateGrpcPayload(GetSessionDto)
+  async getSession(req : GetSessionDto): Promise<GetSessionResponse> {
+    return await this.redisService.getSession(req);
   }
 
   @GrpcMethod(ServiceName, "ValidateSession")
-  async validateSession(req : AuthValidateSessionRequest): Promise<AuthValidateSessionResponse> {
-    return await this.redisService.validateSession(req.sessionId);
+  @ValidateGrpcPayload(ValidateSessionDto)
+  async validateSession(req : ValidateSessionDto): Promise<AuthValidateSessionResponse> {
+    return await this.redisService.validateSession(req);
   }
 
   @GrpcMethod(ServiceName, "DeleteSession")
-  async deleteSession(req : DeleteSessionRequest): Promise<DeleteSessionResponse> {
-    return await this.redisService.deleteSession(req.sessionId);
+  @ValidateGrpcPayload(DeleteSessionDto)
+  async deleteSession(req : DeleteSessionDto): Promise<DeleteSessionResponse> {
+    return await this.redisService.deleteSession(req);
   }
 }

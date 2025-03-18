@@ -5,13 +5,15 @@ import {v4 as uuid} from "uuid"
 import { toProtobufTimestamp} from "@ms/common/utils"
 import { trace } from '@opentelemetry/api';
 import { TraceMethod } from '@ms/common/observability/telemetry';
+import { CreateSessionDto } from './protos/dto/create-session.dto';
+import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './protos/dto/get-session.dto';
 
 @Injectable()
 export class RedisService {
   constructor(@Inject("REDIS_CLIENT") private redisClient : Redis) {}
 
   @TraceMethod()
-  async createSession(userId: number): Promise<CreateSessionResponse> {
+  async createSession({userId}: CreateSessionDto): Promise<CreateSessionResponse> {
     const span = trace.getActiveSpan()
     try{
         const sessionId = uuid()
@@ -55,7 +57,7 @@ export class RedisService {
     }
   
   @TraceMethod()
-  async getSession(sessionId: string): Promise<GetSessionResponse> {
+  async getSession({sessionId}: GetSessionDto): Promise<GetSessionResponse> {
     const span = trace.getActiveSpan()
     try {
       span.setAttribute("sessionId", sessionId)
@@ -78,7 +80,7 @@ export class RedisService {
   }
 
   @TraceMethod()
-  async validateSession(sessionId: string): Promise<AuthValidateSessionResponse> {
+  async validateSession({sessionId}: ValidateSessionDto): Promise<AuthValidateSessionResponse> {
     const span = trace.getActiveSpan()
     try {
       const sessionStr = await this.redisClient.get(`${this.formayRedisKeyForSessions(sessionId)}`)
@@ -114,7 +116,7 @@ export class RedisService {
   }
 
   @TraceMethod()
-  async deleteSession(sessionId : string): Promise<DeleteSessionResponse> {
+  async deleteSession({sessionId} : DeleteSessionDto): Promise<DeleteSessionResponse> {
     const span = trace.getActiveSpan()
     try{
       span.setAttribute("session.id", sessionId)

@@ -30,7 +30,6 @@ message RegistRequest {
     string password = 4;
 }
 
-// in case we want to add otp for the websocket
 message RegistResponse {
     users.User user = 1;
     string sessionId = 2;

@@ -1,44 +1,58 @@
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { UsersService } from './users.service';
-import {CreateUserRequest, FindAllUsersRequest, FindAllUsersResponse, 
-  FindOneUserByEmailRequest, FindOneUserByIdRequest, UpdateUserRequest} from "@ms/common/generated/users"
+import { FindAllUsersResponse } from "@ms/common/generated/users"
+import { ValidateGrpcPayload } from "@ms/common/decorators"
 import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
+import { DeleteUserDto, FindOneByIdDto } from './dto/delete-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto, FindOneByEmailDto } from './dto/create-user.dto';
+import { FindAllDto } from './dto/findAll-user.dto';
+import { LoggingInterceptor } from '@ms/common/observability/logger';
+import { GenericExceptionFilter } from "@ms/common/exceptionFilters"
 
 const UsersServiceName = "UsersService"
 
-@UseInterceptors(GrpcMetricsInterceptor) 
+@UseFilters(GenericExceptionFilter)
+@UseInterceptors(GrpcMetricsInterceptor)
+@UseInterceptors(new LoggingInterceptor(["password"]))
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @GrpcMethod(UsersServiceName,"CreateUser")
-  async create(req: CreateUserRequest) {
-    return await this.usersService.create(req);
+  @ValidateGrpcPayload(CreateUserDto)
+  async create(data: CreateUserDto) {
+    return await this.usersService.create(data);
   }
 
   @GrpcMethod(UsersServiceName,"FindAllUsers")
-  async findAll(data : FindAllUsersRequest) : Promise<FindAllUsersResponse> {
-    return await this.usersService.findAll(data.page, data.limit) as any;
+  @ValidateGrpcPayload(FindAllDto)
+  async findAll(data : FindAllDto) : Promise<FindAllUsersResponse> {
+    return await this.usersService.findAll(data);
   }
 
   @GrpcMethod(UsersServiceName,"FindOneUserById")
-  async findOneById(data :FindOneUserByIdRequest) {
-    return await this.usersService.findOneById(data.id);
+  @ValidateGrpcPayload(FindOneByIdDto)
+  async findOneById(data :FindOneByIdDto) {
+    return await this.usersService.findOneById(data);
   }
 
   @GrpcMethod(UsersServiceName,"FindOneUserByEmail")
-  async findOneByEmail(data: FindOneUserByEmailRequest) {
-    return await this.usersService.findOneByEmail(data.email);
+  @ValidateGrpcPayload(FindOneByEmailDto)
+  async findOneByEmail(data: FindOneByEmailDto) {
+    return await this.usersService.findOneByEmail(data);
   }
 
   @GrpcMethod(UsersServiceName,"UpdateUser")
-  async update(req: UpdateUserRequest) {
-    return await this.usersService.update(req);
+  @ValidateGrpcPayload(UpdateUserDto)
+  async update(data: UpdateUserDto) {
+    return await this.usersService.update(data);
   }
 
   @GrpcMethod(UsersServiceName,"DeleteUser")
-  async remove(id: number) {
-    return await this.usersService.remove(id);
+  @ValidateGrpcPayload(DeleteUserDto)
+  async remove(data: DeleteUserDto) {
+    return await this.usersService.remove(data);
   }
 }

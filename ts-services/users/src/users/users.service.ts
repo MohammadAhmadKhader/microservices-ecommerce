@@ -6,13 +6,16 @@ import {toProtobufTimestamp} from "@ms/common/utils"
 import { CreateUserRequest, FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
 import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
 import { TraceMethod } from '@ms/common/observability/telemetry';
+import { DeleteUserDto } from './dto/delete-user.dto';
+import { FindAllDto } from './dto/findAll-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectRepository(User) private usersRepository: Repository<User>){}
 
   @TraceMethod()
-  async create(createDto: CreateUserRequest) {
+  async create(createDto: CreateUserDto) {
     const lowerCaseEmail = createDto.email.toLowerCase()
     const IsUserExist = await this.usersRepository.exists({where:{email: lowerCaseEmail}})
     if (IsUserExist) {
@@ -36,7 +39,7 @@ export class UsersService {
   }
 
   @TraceMethod()
-  async findAll(page : number, limit : number) : Promise<FindAllUsersResponse> {
+  async findAll({page, limit}: FindAllDto) : Promise<FindAllUsersResponse> {
     const count = await this.usersRepository.count()
     let users = await this.usersRepository.find()
     users = users.map((user)=>{
@@ -48,7 +51,7 @@ export class UsersService {
   }
 
   @TraceMethod()
-  async findOneById(id: number) {
+  async findOneById({id}) {
     const user = await this.usersRepository.findOneBy({id})
     if (user) {
       user.createdAt = toProtobufTimestamp(user.createdAt)
@@ -59,7 +62,7 @@ export class UsersService {
   }
 
   @TraceMethod()
-  async findOneByEmail(email: string) {
+  async findOneByEmail({email}) {
     const user = await this.usersRepository.findOneBy({email});
     if (user) {
       user.createdAt = toProtobufTimestamp(user.createdAt)
@@ -82,7 +85,7 @@ export class UsersService {
   }
 
   @TraceMethod()
-  async remove(id: number) {
+  async remove({id}: DeleteUserDto) {
     await this.usersRepository.delete(id)
   }
 }

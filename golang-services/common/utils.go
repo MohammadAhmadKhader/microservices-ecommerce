@@ -6,16 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -87,6 +83,7 @@ var StatusCodesMap = map[codes.Code]int{
 	codes.NotFound: http.StatusBadRequest,
 	codes.FailedPrecondition: http.StatusPreconditionFailed,
 }
+
 func MapRpcCodesToHttpCodes(rpcCode codes.Code) (httpStatusCode int) {
 	httpStatusCode = StatusCodesMap[rpcCode]
 	return httpStatusCode
@@ -117,34 +114,6 @@ func CopyProto[TProto proto.Message](loginPayload TProto) (TProto, error) {
 	}
 
 	return casted, nil
-}
-
-func ServiceIPGetter(ctx context.Context) (string, error) {
-	kubeConfig := os.Getenv("KUBCONFIG")
-	if kubeConfig == "" {
-		return "", fmt.Errorf("kubeConfig was not found")
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		return "", err
-	}
-
-	clinetset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return "", err
-	}
-
-	podName := os.Getenv("POD_NAME")
-	namespace := os.Getenv("POD_NAMESPACE")
-
-	pod, err := clinetset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	podIP := pod.Status.PodIP
-
-	return podIP, nil
 }
 
 func IsGrpcError(err error) bool {

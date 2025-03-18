@@ -8,13 +8,16 @@ import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { RpcAlreadyExistsException, RpcInternalException, RpcInvalidArgumentException, RpcUnauthorizedException } from "@ms/common/rpcExceprions"
 import { TraceMethod } from '@ms/common/observability/telemetry';
+import { LoginDto } from './dto/login-dto';
+import { ResetPasswordDto } from './dto/reset-password-dto';
+import { ValidateSessionDto } from './dto/validate-session-dto';
 
 @Injectable()
 export class AuthService {
   constructor(@Inject(ConsulService) private registryService: ConsulService) {}
 
   @TraceMethod()
-  async login(email:string, password: string): Promise<LoginResponse> {
+  async login({ email, password }: LoginDto): Promise<LoginResponse> {
     const usersService = await this.getUsersService()
 
     const userByEmailResp = await handleObservable(usersService.FindOneUserByEmail({email}))
@@ -35,7 +38,7 @@ export class AuthService {
   }
 
   @TraceMethod()
-  async regist(email:string, password: string, firstName: string, lastName:string): Promise<RegistResponse> {
+  async regist({email, password, firstName, lastName}): Promise<RegistResponse> {
     const span = trace.getActiveSpan()
     const usersService = await this.getUsersService()
 
@@ -72,11 +75,14 @@ export class AuthService {
     }
 
     span.setStatus({code: SpanStatusCode.OK})
+
+    delete createdUser.password
+    
     return {user: createdUser, sessionId: createSessionResponse.session.id};
   }
 
   @TraceMethod()
-  async resetPassword(userId:number, oldPassword: string, newPassword: string, confirmNewPassword: string): Promise<EmptyBody> {
+  async resetPassword({id: userId, oldPassword, newPassword, confirmNewPassword}: ResetPasswordDto): Promise<EmptyBody> {
     // this logic must be moved to outside to a validator
     if (oldPassword == newPassword) {
       throw new RpcInvalidArgumentException("old and new password are same")
@@ -101,7 +107,7 @@ export class AuthService {
   }
 
   @TraceMethod()
-  async validateSession(sessionId: string): Promise<AuthValidateSessionResponse> {
+  async validateSession({sessionId}: ValidateSessionDto): Promise<AuthValidateSessionResponse> {
     const redisService = await this.getRedisService()
     const validateSessionResponse = await handleObservable(redisService.ValidateSession({sessionId:sessionId}))
     if (!validateSessionResponse.success) {
