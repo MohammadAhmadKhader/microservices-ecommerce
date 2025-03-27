@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnModuleInit, UseInterceptors } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,16 +8,14 @@ import { FindAllProductsRequest, FindAllProductsResponse, FindProductsByIdsRespo
 import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
-import { MethodLogger} from "@ms/common/observability/logger"
 import { trace } from '@opentelemetry/api';
-import { RpcFailedPreConditionException, RpcNotFoundException} from "@ms/common/rpcExceprions"
+import { RpcFailedPreConditionException, RpcNotFoundException} from "@ms/common"
 import { TraceMethod } from '@ms/common/observability/telemetry';
 
 @Injectable()
 export class ProductsService implements OnModuleInit {
   constructor(
-    @InjectRepository(Product) private productRepository: Repository<Product>
-    ){}
+    @InjectRepository(Product) private productRepository: Repository<Product>){}
 
   async onModuleInit(){
     await this.initializeBroker()
@@ -33,7 +31,6 @@ export class ProductsService implements OnModuleInit {
   }
 
   @TraceMethod()
-  @MethodLogger()
   async create(createProductDto: CreateProductDto): Promise<{product: ProductProtobuf}> {
     const span = trace.getActiveSpan()
     if (span) {
@@ -46,7 +43,6 @@ export class ProductsService implements OnModuleInit {
   }
 
   @TraceMethod()
-  @MethodLogger()
   async findAll({page, limit}: FindAllProductsRequest): Promise<FindAllProductsResponse> {
     const span = trace.getActiveSpan()
 
@@ -74,7 +70,6 @@ export class ProductsService implements OnModuleInit {
   }
 
   @TraceMethod()
-  @MethodLogger()
   async findOne({id}: FindOneProductRequest): Promise<{product: ProductProtobuf}> {
     const product = await this.productRepository.findOneBy({
       id,
@@ -89,7 +84,6 @@ export class ProductsService implements OnModuleInit {
 
   
   @TraceMethod()
-  @MethodLogger()
   async findProductsByIds({ ids }: FindProductsByIdsRequest): Promise<FindProductsByIdsResponse> {
     const products = await this.productRepository.find({
       where :{
@@ -105,7 +99,6 @@ export class ProductsService implements OnModuleInit {
   }
 
   @TraceMethod()
-  @MethodLogger()
   async update({id, ...updateData}: UpdateProductDto) : Promise<{product: ProductProtobuf}> {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
@@ -123,13 +116,11 @@ export class ProductsService implements OnModuleInit {
   }
 
   @TraceMethod()
-  @MethodLogger()
   async remove({ id }:DeleteOneProductRequest): Promise<void> {
     await this.productRepository.delete(id)
   }
 
   @TraceMethod()
-  @MethodLogger()
   async updateStock(productsIdsWithQty : UpdateStocksParams){
     const prodIdQtyMap = {}
     let caseStatements = ""

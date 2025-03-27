@@ -4,11 +4,15 @@
     "watch": "tsc --watch"
   },
   "version": "1.0.0",
-  "main": "utils.js",
+  "main": "./dist/index.js",
   "author": "",
   "license": "ISC",
-  "types": "./utils.d.ts",
-  "exports":{
-    "./*":"./dist/*.js"
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "dependencies": {
+    "winston-logstash": "^1.2.1"
   }
 }

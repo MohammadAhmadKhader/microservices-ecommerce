@@ -13,7 +13,7 @@ export class GrpcMetricsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const args = context.getArgs();
     const {methodName, serviceName} = getMethodAndServiceNameFromArgs(args)
-    
+
     const startTime = performance.now();
     let statusCode = grpcStatus[grpcStatus.OK]
     

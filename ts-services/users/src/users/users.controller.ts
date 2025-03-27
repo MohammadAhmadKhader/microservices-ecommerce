@@ -3,19 +3,18 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { UsersService } from './users.service';
 import { FindAllUsersResponse } from "@ms/common/generated/users"
 import { ValidateGrpcPayload } from "@ms/common/decorators"
-import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
+import { GrpcMetricsInterceptor, LoggingInterceptor } from '@ms/common/modules/index';
 import { DeleteUserDto, FindOneByIdDto } from './dto/delete-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto, FindOneByEmailDto } from './dto/create-user.dto';
 import { FindAllDto } from './dto/findAll-user.dto';
-import { LoggingInterceptor } from '@ms/common/observability/logger';
 import { GenericExceptionFilter } from "@ms/common/exceptionFilters"
 
-const UsersServiceName = "UsersService"
+export const UsersServiceName = "UsersService"
 
 @UseFilters(GenericExceptionFilter)
 @UseInterceptors(GrpcMetricsInterceptor)
-@UseInterceptors(new LoggingInterceptor(["password"]))
+@UseInterceptors(LoggingInterceptor)
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

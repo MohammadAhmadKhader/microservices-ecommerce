@@ -1,20 +1,19 @@
 import { Controller, UseFilters, UseInterceptors} from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
 import { LoginDto } from './dto/login-dto';
-import { LoggingInterceptor } from '@ms/common/observability/logger';
+import { GrpcMetricsInterceptor, LoggingInterceptor } from '@ms/common/modules/index';
 import { GenericExceptionFilter } from "@ms/common/exceptionFilters"
 import { ValidateGrpcPayload } from "@ms/common/decorators"
 import { RegisterDto } from './dto/register-dto';
 import { ResetPasswordDto } from './dto/reset-password-dto';
 import { ValidateSessionDto } from './dto/validate-session-dto';
 
-const AuthServiceName = "AuthService"
+export const AuthServiceName = "AuthService"
 
 @UseFilters(GenericExceptionFilter)
 @UseInterceptors(GrpcMetricsInterceptor)
-@UseInterceptors(new LoggingInterceptor(["password","oldPassword","newPassword","confirmNewPassword"]))
+@UseInterceptors(LoggingInterceptor)
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

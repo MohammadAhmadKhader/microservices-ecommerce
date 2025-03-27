@@ -1,14 +1,12 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { RedisController } from './redis.controller';
+import { Module } from '@nestjs/common';
+import { RedisController, RedisServiceName } from './redis.controller';
 import { RedisService } from './redis.service';
 import { ConfigModule } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import { HealthModule } from '@ms/common/modules/health/health.module';
-import { ConsulService } from '@ms/common/modules/registry/registry.service';
 import {v4 as uuid} from "uuid"
-import { TraceModule } from './telemetry';
+import { TraceModule } from './redis.telemetry';
 import ServiceConfig from './redis.config';
-import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
+import { LoggingInterceptor, LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/common';
 
 @Module({
   imports: [
@@ -47,6 +45,31 @@ import { MetricsModule } from '@ms/common/modules/metrics/metrics.module';
         checkId: serviceId,
       })
     }
+  },
+  {
+    provide:LoggingService,
+    useFactory: () => {
+      const serviceConfig = ServiceConfig()
+      return new LoggingService({
+        service: RedisServiceName,
+        username:"",
+        password:"",
+        isProduction: serviceConfig.isProduction,
+        logstashHost: serviceConfig.logstashHost,
+        logstashPort: serviceConfig.logstashPort,
+      })
+    }
+  },
+  {
+    provide: 'REDACTED_KEYS',
+    useValue: [],
+  },
+  {
+    provide: LoggingInterceptor,
+    useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
+      return new LoggingInterceptor(loggingService, redactedKeys);
+    },
+    inject: [LoggingService, 'REDACTED_KEYS'],
   }],
 })
 export class RedisModule {}

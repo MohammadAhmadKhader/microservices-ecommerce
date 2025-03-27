@@ -2,16 +2,16 @@ package common
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/rs/zerolog"
 	"gorm.io/gorm/logger"
 )
 
+// Must be changed to add the ability to put the gorm config
 type CustomGormLogger struct {
-	zerolog  zerolog.Logger
-	LogLevel logger.LogLevel
+	servLogger  *zerolog.Logger
+	logger.Config
 }
 
 func (g *CustomGormLogger) LogMode(level logger.LogLevel) logger.Interface {
@@ -20,16 +20,16 @@ func (g *CustomGormLogger) LogMode(level logger.LogLevel) logger.Interface {
 	return &newLogger
 }
 
-func (g *CustomGormLogger) Info(ctx context.Context, msg string, data ...any) {
-	g.zerolog.Info().Msgf(msg, data...)
+func (g *CustomGormLogger) Info(ctx context.Context, msg string, args ...any) {
+	g.servLogger.Info().Msgf(msg, args...)
 }
 
-func (g *CustomGormLogger) Warn(ctx context.Context, msg string, data ...any) {
-	g.zerolog.Warn().Msgf(msg, data...)
+func (g *CustomGormLogger) Warn(ctx context.Context, msg string, args ...any) {
+	g.servLogger.Warn().Msgf(msg, args...)
 }
 
-func (g *CustomGormLogger) Error(ctx context.Context, msg string, data ...any) {
-	g.zerolog.Error().Msgf(msg, data...)
+func (g *CustomGormLogger) Error(ctx context.Context, msg string, args ...any) {
+	g.servLogger.Error().Msgf(msg, args...)
 }
 
 // no passwords in golang services so far to sanitize
@@ -40,20 +40,28 @@ func (g *CustomGormLogger) Trace(ctx context.Context, begin time.Time, f func() 
 	sql, rows := f()
 
 	if err != nil {
-		g.zerolog.Error().Str("query", sql).Int64("rows", rows).
-			Dur("duration", duration).Err(err).Msg("Query execution failed")
-
+		g.servLogger.Error().Err(err).
+		Str("query", sql).Int64("rows_affected", rows).Dur("durationMs", duration).
+		Msg("failed to execute query")
 	} else {
-		g.zerolog.Info().Str("query", sql).Int64("rows", rows).
-			Dur("duration", duration).Msg("")
+		g.servLogger.Info().
+		Str("query", sql).Int64("rows_affected", rows).Dur("durationMs", duration).
+		Msg("executed query successfully")
 	}
 }
 
-func NewCustomGormLogger() *CustomGormLogger {
-	zerolog := zerolog.New(os.Stdout)
+func (l *CustomGormLogger) ParamsFilter(ctx context.Context, sql string, params ...interface{}) (string, []interface{}) {
+	if l.Config.ParameterizedQueries {
+		return sql, nil
+	}
+	
+	return sql, params
+}
 
+
+func NewCustomGormLogger(serviceLogger *zerolog.Logger, config logger.Config) *CustomGormLogger {
 	return &CustomGormLogger{
-		zerolog:  zerolog,
-		LogLevel: logger.Info,
+		servLogger:  serviceLogger,
+		Config: config,
 	}
 }

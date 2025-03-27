@@ -5,14 +5,19 @@ import (
 	"ms/common"
 	"ms/orders/models"
 
+	"github.com/rs/zerolog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/plugin/opentelemetry/tracing"
 )
 
-func InitDB() *gorm.DB {
+func InitDB(serviceLogger *zerolog.Logger) *gorm.DB {
 	dsn := GetMysqlDSN()
-	logger := common.NewCustomGormLogger()
+	logger := common.NewCustomGormLogger(serviceLogger, logger.Config{
+		LogLevel: logger.Info,
+		ParameterizedQueries: true,
+	})
 	
 	err := CreateDBIfNotExist()
 	if err != nil {
@@ -22,7 +27,7 @@ func InitDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger,
 	})
-	
+
 	if err != nil {
 		panic(err)
 	}

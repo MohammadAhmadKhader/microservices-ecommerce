@@ -10,6 +10,7 @@ import (
 	"net"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/rs/zerolog"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 
@@ -26,9 +27,13 @@ var (
 	telemetryHost    = common.EnvString("TELEMETRY_HOST", "localhost")
 	telemetryPort	 = common.EnvString("TELEMETRY_PORT", "4318")
 	telemetryAddr    = telemetryHost+":"+telemetryPort
+	logstashHost     = common.EnvString("LOGSTASH_HOST", "localhost")
+	logstashPort     = common.EnvString("LOGSTASH_PORT", "5000")
+	logstashAddr 	 = logstashHost+":"+logstashPort
 )
 
 var tracer trace.Tracer
+var serviceLogger *zerolog.Logger
 
 func main() {
 	ctx := context.Background()
@@ -71,11 +76,15 @@ func main() {
 	defer registry.Deregister(ctx, instanceId)
 
 	gateway := gateway.NewGateway(registry)
-	DB := InitDB()
+
+	logger := common.NewServiceLogger(logstashAddr, serviceName)
+	serviceLogger = logger
+
+	DB := InitDB(logger)
 	store := NewStore(DB)
 	service := NewService(store, gateway)
 	serviceWithOtel := NewTelemetryMiddleware(service)
-	serviceWithLogging := NewLoggingMiddleware(serviceWithOtel)
+	serviceWithLogging := NewLoggingMiddleware(serviceWithOtel, logger)
 
 	consumer := NewConsumer(serviceWithLogging)
 	go consumer.Consume(amqpChan)

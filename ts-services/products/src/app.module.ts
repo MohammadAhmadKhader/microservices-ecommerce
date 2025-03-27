@@ -1,10 +1,10 @@
 import { createDBIfNotExist } from "./utils/utils"
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProductsModule } from './products/products.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthModule } from '@ms/common/modules/health/health.module';
-import { ProductTelemetrySubscriber, TraceModule } from "./products/telemetry";
+import { TraceModule } from "./products/products.telemetry";
 
 @Module({
   imports: [
@@ -23,9 +23,7 @@ import { ProductTelemetrySubscriber, TraceModule } from "./products/telemetry";
           port: Number(process.env.DB_PORT),
           host: process.env.DB_HOST,
           autoLoadEntities: true,
-          logging: ['query', 'error', 'warn'],
           synchronize: true,
-          subscribers:[ProductTelemetrySubscriber]
         };
       },
     }),

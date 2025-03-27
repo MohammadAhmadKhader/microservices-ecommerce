@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: "elasticsearch"
+    env_file:
+      - "./.env"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+     test: ["CMD-SHELL", "curl -fsSL http://localhost:9200/_cluster/health || exit 1"]
+     interval: 3s
+     retries: 7
+     start_period: 20s
+     timeout: 5s
+    
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    container_name: "kibana"
+    env_file:
+      - "./.env"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+  
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    container_name: "logstash"
+    env_file:
+      - "./.env"
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - "./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
+      - "./logstash.yml:/usr/share/logstash/config/logstash.yml:ro"
+
+volumes:
+  elasticsearch_data:

@@ -1,26 +1,23 @@
-import { Catch, Controller, UseFilters, UseInterceptors } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { MetricsService } from '@ms/common/modules/metrics/metrics.service';
-import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
-import { LoggingInterceptor } from '@ms/common/observability/logger';
+import { GrpcMetricsInterceptor, LoggingInterceptor, GenericExceptionFilter } from '@ms/common';
 import { ValidateGrpcPayload } from "@ms/common/decorators";
 import { DeleteProductDto } from './dto/delete-product.dto';
 import { FindAllProductsDto } from './dto/findAll-product.dto';
 import { FindOneProductDto } from './dto/findOne-product.dto';
 import { FindProductsByIds } from './dto/findByIds-product.dto';
-import {GenericExceptionFilter} from "@ms/common/exceptionFilters"
 
-const ProductService = "ProductsService"
+export const ProductService = "ProductsService"
 
 @UseFilters(GenericExceptionFilter)
 @UseInterceptors(GrpcMetricsInterceptor)
-@UseInterceptors(new LoggingInterceptor())
+@UseInterceptors(LoggingInterceptor)
 @Controller()
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService, private readonly metricsService: MetricsService) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @GrpcMethod(ProductService, "Create")
   @ValidateGrpcPayload(CreateProductDto)

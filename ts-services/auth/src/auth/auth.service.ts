@@ -30,7 +30,7 @@ export class AuthService {
     if (!isMatched) {
       throw new RpcInvalidArgumentException("wrong email or password")
     }
-
+    
     const redisService = await this.getRedisService()
     const createSessionResponse = await handleObservable(redisService.CreateSession({userId:user.id}))
     
@@ -77,7 +77,6 @@ export class AuthService {
     span.setStatus({code: SpanStatusCode.OK})
 
     delete createdUser.password
-    
     return {user: createdUser, sessionId: createSessionResponse.session.id};
   }
 

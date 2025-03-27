@@ -57,11 +57,14 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 
 	_, err := s.productsGateway.GetProductsFromIds(ctx, productIds)
 	if err != nil {
+		utils.HandleSpanErr(&span, err)
 		return nil, err
 	}
+
 	span.AddEvent("Returned response from productsGateway")
 	err = utils.ValidateOrder(p)
 	if err != nil {
+		utils.HandleSpanErr(&span, err)
 		return nil, common.ErrInvalidArgument(err.Error())
 	}
 

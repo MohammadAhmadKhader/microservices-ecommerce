@@ -10,6 +10,9 @@ export class GenericExceptionFilter implements RpcExceptionFilter<Error> {
         return throwError(() => exception.getError());
     }
 
+    console.log(exception.stack)
+    console.log(exception.message)
+
     const genericGrpcError = {
       code: status.INTERNAL,
       message: "Internal server error",

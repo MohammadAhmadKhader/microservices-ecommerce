@@ -101,6 +101,7 @@ func InitRegistryAndHandleIt(ctx context.Context, serviceName, address string) (
 		for {
 			err = registry.UpdateHealthCheck(instanceId, serviceName)
 			if err != nil {
+				registry.Deregister(ctx, fmt.Sprintf("%v-%v", serviceName, instanceId))
 				log.Fatalf("error with updating health status: %v",err)
 			}
 			

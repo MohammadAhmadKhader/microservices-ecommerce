@@ -1,7 +1,6 @@
 import { Metadata } from '@grpc/grpc-js';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { Observable, lastValueFrom } from "rxjs";
-import {context, trace} from "@opentelemetry/api"
 import { ServerWritableStreamImpl } from '@grpc/grpc-js/build/src/server-call';
 
 export function toProtobufTimestamp(date: Date): any {

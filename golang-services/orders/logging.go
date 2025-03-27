@@ -2,56 +2,59 @@ package main
 
 import (
 	"context"
-	pb "ms/common/generated"
-	"os"
+	"ms/common/generated"
 	"time"
 
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/proto"
 )
 
 type LoggingMiddleware struct {
 	service OrdersService
-	logger zerolog.Logger
+	logger *zerolog.Logger
 }
 
 
-func NewLoggingMiddleware(service OrdersService) *LoggingMiddleware {
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	
+func NewLoggingMiddleware(service OrdersService, serviceLogger *zerolog.Logger) *LoggingMiddleware {
 	return &LoggingMiddleware{
 		service: service,
-		logger: logger,
+		logger: serviceLogger,
 	}
 }
 
-func (l *LoggingMiddleware) loggingHandler(start time.Time, handlerName string) {
-	l.logger.Info().Str("handler", handlerName).Dur("duration", time.Since(start)).Msg("")
+func (l *LoggingMiddleware) loggingHandler(start time.Time, handlerName string, payload proto.Message) {
+	payloadDict := zerolog.Dict()
+	for fieldDescriptor,refVal := range payload.ProtoReflect().Range {
+		payloadDict.Any(fieldDescriptor.JSONName(), refVal.String())
+	}
+
+	l.logger.Info().Str("handler", handlerName).Dur("durationMs", time.Since(start)).Dict("payload", payloadDict).Msg("")
 }
 
-func (l *LoggingMiddleware) GetOrders(ctx context.Context, pb *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+func (l *LoggingMiddleware) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
 	start := time.Now()
-	defer l.loggingHandler(start, "GetOrders")
+	defer l.loggingHandler(start, "GetOrders", req)
 
-	return l.service.GetOrders(ctx, pb)
+	return l.service.GetOrders(ctx, req)
 }
 
-func (l *LoggingMiddleware) GetOrderById(ctx context.Context, pb *pb.GetOrderByIdRequest) (*pb.Order, error) {
+func (l *LoggingMiddleware) GetOrderById(ctx context.Context, req *pb.GetOrderByIdRequest) (*pb.Order, error) {
 	start := time.Now()
-	defer l.loggingHandler(start, "GetOrderById")
+	defer l.loggingHandler(start, "GetOrderById", req)
 	
-	return l.service.GetOrderById(ctx, pb)
+	return l.service.GetOrderById(ctx, req)
 }
 
-func (l *LoggingMiddleware) UpdateOrderStatus(ctx context.Context, pb *pb.UpdateOrderStatusRequest) (*pb.Order, error) {
+func (l *LoggingMiddleware) UpdateOrderStatus(ctx context.Context, req *pb.UpdateOrderStatusRequest) (*pb.Order, error) {
 	start := time.Now()
-	defer l.loggingHandler(start, "UpdateOrderStatus")
+	defer l.loggingHandler(start, "UpdateOrderStatus", req)
 
-	return l.service.UpdateOrderStatus(ctx, pb)
+	return l.service.UpdateOrderStatus(ctx, req)
 }
 
-func (l *LoggingMiddleware) CreateOrder(ctx context.Context, pb *pb.CreateOrderRequest) (*pb.Order, error) {
+func (l *LoggingMiddleware) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.Order, error) {
 	start := time.Now()
-	defer l.loggingHandler(start, "CreateOrder")
+	defer l.loggingHandler(start, "CreateOrder", req)
 
-	return l.service.CreateOrder(ctx, pb)
+	return l.service.CreateOrder(ctx, req)
 }
