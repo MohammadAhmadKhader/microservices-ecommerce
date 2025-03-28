@@ -1,8 +1,10 @@
 syntax = "proto3";
 
 option go_package = "ms/gateway/pb";
+
+import "google/protobuf/timestamp.proto";
+
 package auth;
-import "users.proto";
 import "shared.proto";
 
 service AuthService {
@@ -19,7 +21,7 @@ message LoginRequest {
 
 // in case we want to add otp for the websocket
 message LoginResponse {
-    users.User user = 1;
+    AuthUser user = 1;
     string sessionId = 2;
 }
 
@@ -32,20 +34,19 @@ message RegistRequest {
 
 // in case we want to add otp for the websocket
 message RegistResponse {
-    users.User user = 1;
+    AuthUser user = 1;
     string sessionId = 2;
 }
 
-//message User {
-//    int32 id = 1;
-//    string firstName = 2;
-//    string lastName = 3;
-//    string email = 4;
-//    string password = 5;
-//    string mobileNumber = 6;
-//    google.protobuf.Timestamp createdAt = 7;
-//    google.protobuf.Timestamp updatedAt = 8;
-//}
+message AuthUser {
+    int32 id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string email = 4;
+    string mobileNumber = 5;
+    google.protobuf.Timestamp createdAt = 6;
+    google.protobuf.Timestamp updatedAt = 7;
+}
 
 
 message ResetPasswordRequest {
@@ -61,5 +62,5 @@ message ValidateSessionRequest {
 
 message ValidateSessionResponse {
     string sessionId = 1;
-    users.User user = 2;
+    AuthUser user = 2;
 }

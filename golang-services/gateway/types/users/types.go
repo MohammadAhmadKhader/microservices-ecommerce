@@ -14,7 +14,7 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func ConvertUserToResponse(user *pb.User) User {
+func ConvertUserToResponse(user *pb.AuthUser) User {
 	return User{
 		ID: user.Id,
 		FirstName: user.FirstName,
