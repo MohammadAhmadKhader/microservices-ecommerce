@@ -2,9 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
-import ServiceConfig from "./users/users.config"
+import ServiceConfig from "./modules/users/users.config"
+import { CommandFactory } from 'nest-commander';
+import { UsersCliModule } from './modules/cli/cli.module';
 
 async function bootstrap() {
+  if(process.argv.includes("seed")) {
+    await CommandFactory.run(UsersCliModule, ["log", "error", "warn"])
+
+    return
+  }
+
   try {
     const config = ServiceConfig()
     const mainApp = await NestFactory.create(AppModule)

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from '@ms/common/modules/health/health.module';
-import { TraceModule, UsersTelemtrySubsecriber } from './users/users.telemetry';
+import { TraceModule, UsersTelemtrySubsecriber } from './modules/users/users.telemetry';
 import { createDBIfNotExist } from './utils/utils';
 
 @Module({

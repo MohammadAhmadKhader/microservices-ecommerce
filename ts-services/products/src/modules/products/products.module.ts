@@ -56,12 +56,12 @@ import { ConfigModule } from '@nestjs/config';
     provide: 'REDACTED_KEYS',
     useValue: [],
   },
-    {
-      provide: LoggingInterceptor,
-      useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
-        return new LoggingInterceptor(loggingService, redactedKeys);
-      },
-      inject: [LoggingService, 'REDACTED_KEYS'],
+  {
+    provide: LoggingInterceptor,
+    useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
+      return new LoggingInterceptor(loggingService, redactedKeys);
     },
+    inject: [LoggingService, 'REDACTED_KEYS'],
+  }
 ]})
 export class ProductsModule {}

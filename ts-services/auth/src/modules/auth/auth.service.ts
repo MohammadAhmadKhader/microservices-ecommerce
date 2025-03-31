@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { LoginResponse, RegistResponse, ValidateSessionResponse as AuthValidateSessionResponse} from '@ms/common/generated/auth';
 import { EmptyBody} from '@ms/common/generated/shared';
-import { comparePassword, hashPassword } from '../auth/utils/hash';
+import { comparePassword, hashPassword } from './utils/hash';
 import { handleObservable } from '@ms/common/utils';
 import {getRedisGrpcService, getUsersGrpcService} from "@ms/common/grpc"
 import { ConsulService } from '@ms/common/modules/registry/registry.service';

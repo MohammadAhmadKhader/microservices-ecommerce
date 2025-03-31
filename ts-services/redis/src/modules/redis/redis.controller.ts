@@ -3,9 +3,9 @@ import { RedisService } from './redis.service';
 import { GrpcMethod } from '@nestjs/microservices';
 import { CreateSessionResponse,DeleteSessionResponse , GetSessionResponse,AuthValidateSessionResponse } from '@ms/common/generated/redis';
 import { GrpcMetricsInterceptor } from '@ms/common/modules/metrics/metrics.interceptor';
-import { CreateSessionDto } from './protos/dto/create-session.dto';
+import { CreateSessionDto } from './dto/create-session.dto';
 import { ValidateGrpcPayload, GenericExceptionFilter, LoggingInterceptor } from "@ms/common"
-import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './protos/dto/get-session.dto';
+import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './dto/get-session.dto';
 
 export const RedisServiceName = "RedisService"
 

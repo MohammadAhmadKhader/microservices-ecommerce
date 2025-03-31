@@ -5,8 +5,8 @@ import {v4 as uuid} from "uuid"
 import { toProtobufTimestamp} from "@ms/common/utils"
 import { trace } from '@opentelemetry/api';
 import { TraceMethod } from '@ms/common/observability/telemetry';
-import { CreateSessionDto } from './protos/dto/create-session.dto';
-import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './protos/dto/get-session.dto';
+import { CreateSessionDto } from './dto/create-session.dto';
+import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './dto/get-session.dto';
 
 @Injectable()
 export class RedisService {

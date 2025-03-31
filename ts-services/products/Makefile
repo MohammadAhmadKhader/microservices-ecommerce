@@ -6,4 +6,4 @@ run-prod:
 	npm run start
 
 run-dev:
-	npm run start:dev
+	npm run start:dev $(MAKECMDGOALS)

@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import ServiceConfig from './auth/auth.config';
+import ServiceConfig from './modules/auth/auth.config';
 
 async function bootstrap() {
   try {

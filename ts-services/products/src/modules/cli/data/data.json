@@ -1,0 +1,114 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "updated product 2",
+      "description": "quis laborum et",
+      "quantity": 12,
+      "price": "251.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-12T02:59:43.743Z",
+      "updatedAt": "2025-03-17T18:01:20.359Z"
+    },
+    {
+      "id": 2,
+      "name": "updated product 7",
+      "description": "updated product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-12T03:01:58.290Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 3,
+      "name": "product 3",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T18:58:51.079Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 4,
+      "name": "product 3",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T19:00:54.367Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 5,
+      "name": "product 5",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T19:02:37.610Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 6,
+      "name": "product 5",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T19:04:59.903Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 8,
+      "name": "product 8",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T20:43:12.776Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 9,
+      "name": "product 9",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T20:46:54.681Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 10,
+      "name": "product 10",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T21:03:32.998Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 11,
+      "name": "product 11",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-13T22:41:41.791Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    },
+    {
+      "id": 12,
+      "name": "product 13",
+      "description": "product description",
+      "quantity": 245,
+      "price": "252.54",
+      "categoryId": 1,
+      "createdAt": "2025-03-14T20:43:59.614Z",
+      "updatedAt": "2025-03-17T05:53:22.513Z"
+    }
+  ]
+}
