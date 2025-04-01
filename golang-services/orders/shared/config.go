@@ -1,8 +1,6 @@
-package main
+package shared
 
 import (
-	"fmt"
-
 	"github.com/joho/godotenv"
 )
 
@@ -15,10 +13,13 @@ type DBConfig struct {
 	DB_PASSWORD string
 	DB_USER string
 	DB_PORT string
+	IS_PRODUCTION bool
+	IS_STAGING bool
+	IS_DEVELOPMENT bool
 }
 
 func LoadEnvs() error {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("./.env")
 	if err != nil {
 		return err
 	}
@@ -36,12 +37,27 @@ func initConfig() DBConfig {
 		panic(err)
 	}
 
+	isDevelopment := false
+	isProduction := false
+	isStaging := false
+	env := getEnv("ENV","development")
+	if env == "development" {
+		isDevelopment = true
+	} else if env == "staging" {
+		isStaging = true
+	} else {
+		isProduction = true
+	}
+
 	return DBConfig{
 		DB_HOST: getEnv("DB_HOST",""),
 		DB_NAME: getEnv("DB_NAME",""),
 		DB_PASSWORD: getEnv("DB_PASSWORD",""),
 		DB_USER: getEnv("DB_USER",""),
 		DB_PORT: getEnv("DB_PORT",""),
+		IS_PRODUCTION: isProduction,
+		IS_STAGING: isStaging,
+		IS_DEVELOPMENT: isDevelopment,
 	}
 }
 
@@ -51,16 +67,4 @@ func getEnv(key, fallbackValue string) string {
 	}
 
 	return fallbackValue
-}
-
-func formatDSN(user, pass, host, port, dbname string) string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, pass, host, port, dbname)
-}
-
-func GetMysqlDSN() string {
-	return formatDSN(Envs.DB_USER, Envs.DB_PASSWORD,Envs.DB_HOST, Envs.DB_PORT, Envs.DB_NAME)
-}
-
-func GetMysqlDSNWithoutDBName() string {
-	return formatDSN(Envs.DB_USER, Envs.DB_PASSWORD,Envs.DB_HOST, Envs.DB_PORT, "")
 }

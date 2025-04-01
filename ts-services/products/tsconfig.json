@@ -6,7 +6,8 @@
     "baseUrl": "./",
     "resolveJsonModule": true,
     "paths": {
-      "@products/*":["src/modules/products/*"]
+      "@products/*":["./src/modules/products/*"],
+      "@src/*":["./src/*"]
     }
   },
 }

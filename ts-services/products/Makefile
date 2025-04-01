@@ -7,3 +7,6 @@ run-prod:
 
 run-dev:
 	npm run start:dev $(MAKECMDGOALS)
+
+run-cli:
+	node ./dist/main.js $(MAKECMDGOALS)

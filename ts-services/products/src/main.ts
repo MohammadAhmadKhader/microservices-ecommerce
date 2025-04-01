@@ -2,7 +2,7 @@ import { MicroserviceOptions , Transport} from '@nestjs/microservices';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
-import ServiceConfig from "./modules/products/products.config"
+import ServiceConfig from "@src/config/config"
 import { ConsoleLogger } from '@nestjs/common';
 import { CommandFactory } from 'nest-commander';
 import { ProductsCLIModule } from './modules/cli/cli.module';

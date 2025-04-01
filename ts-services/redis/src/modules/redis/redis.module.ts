@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import {v4 as uuid} from "uuid"
 import { TraceModule } from './redis.telemetry';
-import ServiceConfig from './redis.config';
+import ServiceConfig from '@src/config/config';
 import { LoggingInterceptor, LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/common';
 
 @Module({

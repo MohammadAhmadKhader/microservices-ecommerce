@@ -5,7 +5,7 @@ import { ProductsService } from './products.service';
 import { ProductsController, ProductService } from './products.controller';
 import { Product } from './entities/product.entity';
 import {v4 as uuid} from "uuid"
-import ServiceConfig from './products.config';
+import ServiceConfig from '@src/config/config';
 import { ProductTelemetrySubscriber } from './products.telemetry';
 import { ConfigModule } from '@nestjs/config';
 

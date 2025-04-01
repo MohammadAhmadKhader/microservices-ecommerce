@@ -2,7 +2,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NestFactory } from '@nestjs/core';
 import { RedisModule } from './modules/redis/redis.module';
 import { join } from 'path';
-import ServiceConfig from './modules/redis/redis.config';
+import ServiceConfig from '@src/config/config';
 
 async function bootstrap() {
     const config = ServiceConfig()

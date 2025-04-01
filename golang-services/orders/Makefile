@@ -15,3 +15,6 @@ run-prod: build
 
 run-dev:
 	air
+
+run-cli:
+	go run . seed $(MAKECMDGOALS)

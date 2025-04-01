@@ -9,3 +9,4 @@
 **/generated
 /data
 **/*.stashed*
+**/data.dev.json

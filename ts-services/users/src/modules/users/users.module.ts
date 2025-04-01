@@ -6,7 +6,7 @@ import { User } from './entities/user.entity';
 import { ConsulService, LoggingService, MetricsModule, LoggingInterceptor} from '@ms/common/modules/index';
 import {v4 as uuid} from "uuid"
 import { ConfigModule } from '@nestjs/config';
-import ServiceConfig from "./users.config"
+import ServiceConfig from "@src/config/config"
 
 @Module({
   imports:[

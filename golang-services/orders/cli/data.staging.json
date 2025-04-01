@@ -1,0 +1,46 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "userId": 1,
+      "totalPrice": 331.5,
+      "status": "Pending"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "totalPrice": 331.5,
+      "status": "Pending"
+    }
+  ],
+  "ordersItems": [
+    {
+      "id": 1,
+      "orderId": 1,
+      "unitPrice": 110.5,
+      "quantity": 3,
+      "productId": 1
+    },
+    {
+      "id": 2,
+      "orderId": 2,
+      "unitPrice": 110.5,
+      "quantity": 3,
+      "productId": 1
+    },
+    {
+      "id": 3,
+      "orderId": 1,
+      "unitPrice": 80.4,
+      "quantity": 4,
+      "productId": 2
+    },
+    {
+      "id": 4,
+      "orderId": 2,
+      "unitPrice": 80.4,
+      "quantity": 4,
+      "productId": 2
+    }
+  ]
+}

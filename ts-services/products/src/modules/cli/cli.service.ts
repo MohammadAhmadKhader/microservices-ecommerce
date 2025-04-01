@@ -1,15 +1,20 @@
 import { Inject } from "@nestjs/common";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { CliLoggingService } from "./cli.logging-service";
-import { writeFile } from "fs/promises";
-import data from "./data/data.json"
+import { writeFile, readFile } from "fs/promises";
 import { Repository } from "typeorm";
 import { Product } from "../products/entities/product.entity";
 import { InjectRepository } from "@nestjs/typeorm";
+import { INJECTION_TOKEN, ServiceConfig } from "@src/config/config";
+import { ConfigService } from "@nestjs/config";
 
 interface SeedOptions {
     syncJson?: Promise<void>
     syncDb?: Promise<void>
+}
+
+interface JsonData {
+    products: Product[]
 }
 
 @Command({
@@ -17,13 +22,25 @@ interface SeedOptions {
     description:"this command used to add initial data to the database",
 })
 export class SeederCommand extends CommandRunner {
-    private dataFilePath = "./src/modules/cli/data/data.json"
+    private dataFilePath = ""
+    private dataDevFilePath = "./src/modules/cli/data/data.dev.json"
+    private dataStagingFilePath = "./src/modules/cli/data/data.staging.json"
+    private serviceCfg: ServiceConfig
 
     constructor(
         @Inject(CliLoggingService) private readonly logger: CliLoggingService,
-        @InjectRepository(Product) private readonly productsRepository: Repository<Product>
+        @InjectRepository(Product) private readonly productsRepository: Repository<Product>,
+        private readonly configService: ConfigService
     ) {
         super()
+
+        this.serviceCfg = this.configService.get<ServiceConfig>(INJECTION_TOKEN)
+
+        if(this.serviceCfg.isDevelopment) {
+            this.dataFilePath = this.dataDevFilePath
+        } else if(this.serviceCfg.isStaging) {
+            this.dataFilePath = this.dataStagingFilePath
+        }
     }
 
     async run(passedParams: string[], options?: SeedOptions): Promise<void> {
@@ -60,12 +77,20 @@ export class SeederCommand extends CommandRunner {
             return { [prod.id]: true }
         })
 
+        const data = await this.fetchData(this.dataFilePath)
         const productsJSON = data.products
+        
         productsJSON.forEach(async (prod) => {
             if(!dbProductsIdsMap[prod.id]) {
                 await this.productsRepository.save(prod as any)
             }
         })
         this.logger.log("syncing db with json was finished")
+    }
+
+    async fetchData(filePath: string) {
+        const data = await readFile(filePath, "utf-8")
+        const parstedData = JSON.parse(data) as JsonData
+        return parstedData
     }
 }

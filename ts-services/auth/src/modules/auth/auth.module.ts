@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController, AuthServiceName } from './auth.controller';
 import {v4 as uuid} from "uuid"
-import ServiceConfig from './auth.config';
+import ServiceConfig from '@src/config/config';
 import { LoggingInterceptor, LoggingService } from '@ms/common/modules/index';
 
 export const appServicesMap = new Map<string, any>()

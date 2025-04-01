@@ -7,7 +7,10 @@ import (
 	"ms/common/broker"
 	"ms/common/discovery"
 	"ms/orders/gateway"
+	"ms/orders/cli"
 	"net"
+	"os"
+	"slices"
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
@@ -36,6 +39,12 @@ var tracer trace.Tracer
 var serviceLogger *zerolog.Logger
 
 func main() {
+	if slices.Contains(os.Args, "seed") {
+		err := cli.ExecuteCommands()
+		log.Println(err)
+		return
+	}
+
 	ctx := context.Background()
 	tracerProvider, err := common.InitTracer(ctx, telemetryAddr, serviceName)
 	if err != nil {

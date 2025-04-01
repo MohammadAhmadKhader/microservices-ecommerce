@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
-import ServiceConfig from "./modules/users/users.config"
+import ServiceConfig from "@src/config/config"
 import { CommandFactory } from 'nest-commander';
 import { UsersCliModule } from './modules/cli/cli.module';
 
