@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import {toProtobufTimestamp} from "@ms/common"
-import { CreateUserRequest, FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
+import { FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
 import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
 import { TraceMethod } from '@ms/common/observability/telemetry';
 import { DeleteUserDto } from './dto/delete-user.dto';
@@ -41,7 +41,14 @@ export class UsersService {
   @TraceMethod()
   async findAll({page, limit}: FindAllDto) : Promise<FindAllUsersResponse> {
     const count = await this.usersRepository.count()
-    let users = await this.usersRepository.find()
+    const skip = (page - 1) * limit;
+
+    let users = await this.usersRepository.find({
+      skip,
+      take: limit,
+      select: ["id", "firstName","lastName", "email", "createdAt", "updatedAt"]
+    })
+
     users = users.map((user)=>{
       user.createdAt = toProtobufTimestamp(user.createdAt)
       user.updatedAt = toProtobufTimestamp(user.updatedAt)

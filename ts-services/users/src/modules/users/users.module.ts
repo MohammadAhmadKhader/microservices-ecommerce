@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { UsersController, UsersServiceName } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { ConsulService, LoggingService, MetricsModule, LoggingInterceptor} from '@ms/common/modules/index';
+import { ConsulService, LoggingService, MetricsModule } from '@ms/common/modules/index';
 import {v4 as uuid} from "uuid"
 import { ConfigModule } from '@nestjs/config';
 import ServiceConfig from "@src/config/config"
@@ -49,17 +49,6 @@ import ServiceConfig from "@src/config/config"
           logstashPort: serviceConfig.logstashPort,
         })
       }
-    },
-    {
-      provide: 'REDACTED_KEYS',
-      useValue: ["password"],
-    },
-    {
-      provide: LoggingInterceptor,
-      useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
-        return new LoggingInterceptor(loggingService, redactedKeys);
-      },
-      inject: [LoggingService, 'REDACTED_KEYS'],
     }],
   exports:[UsersService]
 })

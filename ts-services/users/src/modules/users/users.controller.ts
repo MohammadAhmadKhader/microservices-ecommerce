@@ -3,7 +3,7 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { UsersService } from './users.service';
 import { FindAllUsersResponse } from "@ms/common/generated/users"
 import { ValidateGrpcPayload } from "@ms/common/decorators"
-import { GrpcMetricsInterceptor, LoggingInterceptor } from '@ms/common/modules/index';
+import { GrpcMetricsInterceptor, LoggingInterceptor, RedactKeys } from '@ms/common/modules/index';
 import { DeleteUserDto, FindOneByIdDto } from './dto/delete-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto, FindOneByEmailDto } from './dto/create-user.dto';
@@ -19,6 +19,7 @@ export const UsersServiceName = "UsersService"
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @RedactKeys(["password"])
   @GrpcMethod(UsersServiceName,"CreateUser")
   @ValidateGrpcPayload(CreateUserDto)
   async create(data: CreateUserDto) {
@@ -31,18 +32,21 @@ export class UsersController {
     return await this.usersService.findAll(data);
   }
 
+  @RedactKeys(["password"])
   @GrpcMethod(UsersServiceName,"FindOneUserById")
   @ValidateGrpcPayload(FindOneByIdDto)
   async findOneById(data :FindOneByIdDto) {
     return await this.usersService.findOneById(data);
   }
 
+  @RedactKeys(["password"])
   @GrpcMethod(UsersServiceName,"FindOneUserByEmail")
   @ValidateGrpcPayload(FindOneByEmailDto)
   async findOneByEmail(data: FindOneByEmailDto) {
     return await this.usersService.findOneByEmail(data);
   }
 
+  @RedactKeys(["password"])
   @GrpcMethod(UsersServiceName,"UpdateUser")
   @ValidateGrpcPayload(UpdateUserDto)
   async update(data: UpdateUserDto) {

@@ -4,6 +4,7 @@ import { Metadata } from "@grpc/grpc-js"
 import { getMethodAndServiceNameFromArgs } from '../../utils';
 import { trace, context as telemtryContext } from "@opentelemetry/api";
 import { LoggingService } from "./logger.service";
+import { Reflector } from "@nestjs/core";
 
 function redactSensitiveData(data: any, sensitiveKeys: string[]) {
     if(sensitiveKeys.length === 0) {
@@ -24,13 +25,16 @@ function redactSensitiveData(data: any, sensitiveKeys: string[]) {
     return redactedClone
 }
 
+export const RedactKeys = Reflector.createDecorator<string[]>()
+
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  constructor(private readonly logger: LoggingService, @Inject("REDACTED_KEYS") private readonly redactedKeys: string[] = []) {}
+  constructor(private readonly logger: LoggingService, private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const args = context.getArgs();
-    const redactedData = redactSensitiveData(args[0], this.redactedKeys)
+    const redactedKeys = this.reflector.get(RedactKeys, context.getHandler()) || []
+    const redactedData = redactSensitiveData(args[0], redactedKeys)
 
     const {trace , traceparent} = getCurrTraceAndTraceParent(context)
     const {serviceName, methodName} = getMethodAndServiceNameFromArgs(context.getArgs())
@@ -46,8 +50,8 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((res)=>{
         let loggedRes: any
-        if(this.redactedKeys.length > 0) {
-            loggedRes = redactSensitiveData(structuredClone(res), this.redactedKeys)
+        if(redactedKeys.length > 0) {
+            loggedRes = redactSensitiveData(structuredClone(res), redactedKeys)
         } else {
             loggedRes = res
         }

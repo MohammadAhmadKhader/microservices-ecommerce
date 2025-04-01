@@ -7,8 +7,6 @@ import {v4 as uuid} from "uuid"
 import ServiceConfig from '@src/config/config';
 import { LoggingInterceptor, LoggingService } from '@ms/common/modules/index';
 
-export const appServicesMap = new Map<string, any>()
-
 @Module({
   imports:[MetricsModule],
   controllers: [AuthController],
@@ -46,18 +44,6 @@ export const appServicesMap = new Map<string, any>()
         logstashPort: serviceConfig.logstashPort,
       })
     }
-  },
-  {
-    provide: 'REDACTED_KEYS',
-    useValue: ["password", "oldPassword", "newPassword", "confirmNewPassword"],
-  },
-  {
-    provide: LoggingInterceptor,
-    useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
-      return new LoggingInterceptor(loggingService, redactedKeys);
-    },
-    inject: [LoggingService, 'REDACTED_KEYS'],
-  },
-],
+  }],
 })
 export class AuthModule {}

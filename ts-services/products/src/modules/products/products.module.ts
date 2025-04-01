@@ -52,16 +52,6 @@ import { ConfigModule } from '@nestjs/config';
         logstashPort: serviceConfig.logstashPort,
       })
     }
-  },{
-    provide: 'REDACTED_KEYS',
-    useValue: [],
-  },
-  {
-    provide: LoggingInterceptor,
-    useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
-      return new LoggingInterceptor(loggingService, redactedKeys);
-    },
-    inject: [LoggingService, 'REDACTED_KEYS'],
   }
 ]})
 export class ProductsModule {}

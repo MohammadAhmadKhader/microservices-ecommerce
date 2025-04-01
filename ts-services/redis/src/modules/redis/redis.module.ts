@@ -6,7 +6,7 @@ import { Redis } from 'ioredis';
 import {v4 as uuid} from "uuid"
 import { TraceModule } from './redis.telemetry';
 import ServiceConfig from '@src/config/config';
-import { LoggingInterceptor, LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/common';
+import { LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/common';
 
 @Module({
   imports: [
@@ -59,17 +59,6 @@ import { LoggingInterceptor, LoggingService, MetricsModule, HealthModule, Consul
         logstashPort: serviceConfig.logstashPort,
       })
     }
-  },
-  {
-    provide: 'REDACTED_KEYS',
-    useValue: [],
-  },
-  {
-    provide: LoggingInterceptor,
-    useFactory: (loggingService: LoggingService, redactedKeys: string[]) => {
-      return new LoggingInterceptor(loggingService, redactedKeys);
-    },
-    inject: [LoggingService, 'REDACTED_KEYS'],
   }],
 })
 export class RedisModule {}
