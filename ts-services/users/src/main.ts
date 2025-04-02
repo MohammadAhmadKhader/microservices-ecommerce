@@ -25,6 +25,8 @@ async function bootstrap() {
       },
     });
     
+    mainApp.enableShutdownHooks()
+
     await mainApp.startAllMicroservices()
     await mainApp.listen(config.metricsPort ,config.serviceHost)
     

@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from "ioredis"
-import { CreateSessionResponse, DeleteSessionResponse, GetSessionResponse, Session, AuthValidateSessionResponse } from '@ms/common/generated/redis';
-import {v4 as uuid} from "uuid"
+import { CreateSessionResponse, DeleteSessionResponse, GetSessionResponse,
+   AuthValidateSessionResponse } from '@ms/common/generated/redis';
+import { Session } from '@ms/common/generated/auth';
 import { toProtobufTimestamp} from "@ms/common/utils"
 import { trace } from '@opentelemetry/api';
 import { TraceMethod } from '@ms/common/observability/telemetry';
@@ -13,23 +14,13 @@ export class RedisService {
   constructor(@Inject("REDIS_CLIENT") private redisClient : Redis) {}
 
   @TraceMethod()
-  async createSession({userId}: CreateSessionDto): Promise<CreateSessionResponse> {
+  async createSession({session}: CreateSessionDto): Promise<CreateSessionResponse> {
     const span = trace.getActiveSpan()
     try{
-        const sessionId = uuid()
-        const hour = 1000 * 3600
-        const expiresAt = new Date(Date.now() + (hour * 24))
-        span.setAttribute("sessionId", sessionId)
-        span.setAttribute("userId", userId)
+        span.setAttribute("sessionId", session.id)
+        span.setAttribute("userId", session.userId)
 
-        const session : Session = {
-          id:sessionId,
-          createdAt: toProtobufTimestamp(new Date()),
-          userId,
-          expiresAt:expiresAt.getTime(),
-        }
-
-        const result = await this.redisClient.set(`${this.formayRedisKeyForSessions(sessionId)}`, JSON.stringify(session))
+        const result = await this.redisClient.set(`${this.formayRedisKeyForSessions(session.id)}`, JSON.stringify(session))
         if (result !== "OK") {
           const errMsg = "An unexpected error has occurred during creating session"
           const loggedMsg = `[Redis - Service] - ${errMsg}: `
@@ -89,7 +80,6 @@ export class RedisService {
       span.setAttribute("session", null)
       span.setAttribute("sessionId", sessionId)
 
-      console.log(session, )
       if (!session || new Date() > new Date(session.expiresAt)) {
         const invalidResponse = { message:"session has expired", success:false, session: null }
         span.setAttribute("error", true)

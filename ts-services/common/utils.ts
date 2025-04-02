@@ -2,6 +2,8 @@ import { Metadata } from '@grpc/grpc-js';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { Observable, lastValueFrom } from "rxjs";
 import { ServerWritableStreamImpl } from '@grpc/grpc-js/build/src/server-call';
+import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import { Long } from '@grpc/proto-loader';
 
 export function toProtobufTimestamp(date: Date): any {
     const timestamp = new Timestamp();
@@ -58,4 +60,25 @@ export function getMethodAndServiceNameFromArgs(args: any[]) {
       methodName,
       serviceName
     }
-  }
+}
+
+// custom validator allows only Long numbers
+export function IsLong(validationOptions?: ValidationOptions) {
+    return function (object: Object, propertyName: string) {
+      registerDecorator({
+        name: 'isLong',
+        target: object.constructor,
+        propertyName: propertyName,
+        constraints: [],
+        options: validationOptions,
+        validator: {
+          validate(value: any, args: ValidationArguments) {
+            return Long.isLong(value);
+          },
+          defaultMessage(): string {
+            return `${propertyName} must be a Long integer`;
+          }
+        }
+      });
+    };
+}

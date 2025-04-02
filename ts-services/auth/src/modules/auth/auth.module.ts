@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { AuthController, AuthServiceName } from './auth.controller';
 import {v4 as uuid} from "uuid"
 import ServiceConfig from '@src/config/config';
-import { LoggingInterceptor, LoggingService } from '@ms/common/modules/index';
+import { LoggingService } from '@ms/common/modules/index';
 
 @Module({
   imports:[MetricsModule],

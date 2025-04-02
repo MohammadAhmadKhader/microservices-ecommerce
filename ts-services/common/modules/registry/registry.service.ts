@@ -1,4 +1,4 @@
-import {Injectable, OnApplicationShutdown, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
+import {BeforeApplicationShutdown, Injectable, OnApplicationShutdown, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
 import Consul from "consul";
 import { v4 as uuid } from 'uuid';
 import { DiscoveredService, RegistryOptions, RegistryServiceName } from "../../types";
@@ -6,7 +6,7 @@ import { RpcException } from "@nestjs/microservices";
 import { getRandomInt } from "../../utils";
 
 @Injectable()
-export class ConsulService implements OnApplicationShutdown, OnModuleInit {
+export class ConsulService implements OnModuleInit, OnModuleDestroy {
     private consul: Consul
     private instanceId: string
     private options: RegistryOptions
@@ -83,7 +83,7 @@ export class ConsulService implements OnApplicationShutdown, OnModuleInit {
         }
     }
 
-    async onApplicationShutdown() {
+    async onModuleDestroy() {
         await this.deregisterService()
     }
 }

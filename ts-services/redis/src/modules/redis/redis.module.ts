@@ -10,7 +10,10 @@ import { LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load:[ServiceConfig]
+    }),
     TraceModule,
     HealthModule,
     MetricsModule],

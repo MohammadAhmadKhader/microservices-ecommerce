@@ -1,12 +1,15 @@
 package cookie
 
 import (
+	"context"
 	"fmt"
 	"ms/common"
+	pb "ms/common/generated"
+
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/sessions"
+	"google.golang.org/grpc/metadata"
 )
 
 var store = sessions.NewCookieStore([]byte(common.EnvString("COOKIE_SECRET", "")))
@@ -20,27 +23,24 @@ func GetCookieSession(w http.ResponseWriter, r *http.Request) (*sessions.Session
 	return session, nil
 }
 
-func SetCookie(w http.ResponseWriter, r *http.Request, sessionId string) (*sessions.Session, error) {
+func SetCookie(w http.ResponseWriter, r *http.Request, pbSession *pb.Session) (*sessions.Session, error) {
 	session, err := store.New(r, "cookie-session")
 	if err != nil {
 		return nil, err
 	}
 
-	cookieMaxAgeStr := common.EnvString("COOKIE_MAXAGE", "")
-	cookieMaxAge, err := strconv.Atoi(cookieMaxAgeStr)
-	if err != nil {
-		return nil, err
-	}
-
 	session.Options = &sessions.Options{
-		MaxAge:   cookieMaxAge,
+		MaxAge:   int(pbSession.GetCookieMaxAge()),
 		Path:     "/api",
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 	}
 
-	session.Values["sessionId"] = sessionId
+	session.Values["sessionId"] = pbSession.GetId()
+	session.Values["expiresAt"] = pbSession.GetExpiresAt()
+	session.Values["createdAt"] = pbSession.GetCreatedAt()
+	session.Values["userId"] = pbSession.GetUserId()
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -58,4 +58,9 @@ func GetSessionId(session *sessions.Session) (string, error) {
 	}
 
 	return sessionIdAsString, nil
+}
+
+func SetUserIdToMD(ctx context.Context, userId int32) context.Context {
+	ctx = metadata.AppendToOutgoingContext(ctx,"userId", string(userId))
+	return ctx
 }

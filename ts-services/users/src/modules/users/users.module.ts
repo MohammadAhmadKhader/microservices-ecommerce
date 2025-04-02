@@ -10,9 +10,6 @@ import ServiceConfig from "@src/config/config"
 
 @Module({
   imports:[
-    ConfigModule.forRoot({
-      load:[ServiceConfig]
-    }),
     MetricsModule,
     TypeOrmModule.forFeature([User])],
   controllers: [UsersController],

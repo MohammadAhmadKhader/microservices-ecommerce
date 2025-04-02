@@ -19,10 +19,9 @@ message LoginRequest {
     string password = 2;
 }
 
-// in case we want to add otp for the websocket
 message LoginResponse {
     AuthUser user = 1;
-    string sessionId = 2;
+    Session session = 2;
 }
 
 message RegistRequest {
@@ -32,10 +31,9 @@ message RegistRequest {
     string password = 4;
 }
 
-// in case we want to add otp for the websocket
 message RegistResponse {
     AuthUser user = 1;
-    string sessionId = 2;
+    Session session = 2;
 }
 
 message AuthUser {
@@ -48,6 +46,13 @@ message AuthUser {
     google.protobuf.Timestamp updatedAt = 7;
 }
 
+message Session {
+    string id = 1;
+    int32 userId = 2;
+    int64 createdAt = 3;
+    int32 cookieMaxAge = 4;
+    int64 expiresAt = 5;
+}
 
 message ResetPasswordRequest {
     string oldPassword = 1;

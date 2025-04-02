@@ -48,7 +48,7 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cookie.SetCookie(w, r, loginResponse.SessionId)
+	_, err = cookie.SetCookie(w, r, loginResponse.GetSession())
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -90,7 +90,13 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie.SetCookie(w, r, loginResponse.SessionId)
+	_, err = cookie.SetCookie(w, r, loginResponse.GetSession())
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	
 	userResp := usersTypes.ConvertUserToResponse(loginResponse.User)
 	span.SetStatus(codes.Ok, "user has registed successfully")
 

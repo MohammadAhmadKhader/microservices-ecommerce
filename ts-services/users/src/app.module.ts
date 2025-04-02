@@ -5,10 +5,14 @@ import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from '@ms/common/modules/health/health.module';
 import { TraceModule, UsersTelemtrySubsecriber } from './modules/users/users.telemetry';
 import { createDBIfNotExist } from './utils/utils';
+import ServiceConfig from './config/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load:[ServiceConfig]
+    }),
     TraceModule,
     UsersModule,
     HealthModule,

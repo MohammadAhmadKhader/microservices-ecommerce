@@ -11,10 +11,20 @@ import { TraceMethod } from '@ms/common/observability/telemetry';
 import { LoginDto } from './dto/login-dto';
 import { ResetPasswordDto } from './dto/reset-password-dto';
 import { ValidateSessionDto } from './dto/validate-session-dto';
+import { CreateSessionRequest } from '@ms/common/generated/redis';
+import { v4 as uuid } from "uuid"
+import { ConfigService } from '@nestjs/config';
+import { INJECTION_TOKEN, ServiceConfig } from '@src/config/config';
 
 @Injectable()
 export class AuthService {
-  constructor(@Inject(ConsulService) private registryService: ConsulService) {}
+  private cookieMaxAge: number
+  constructor(
+    @Inject(ConsulService) private registryService: ConsulService,
+    private configService: ConfigService
+  ) {
+    this.cookieMaxAge = this.configService.get<ServiceConfig>(INJECTION_TOKEN).cookieMaxAge
+  }
 
   @TraceMethod()
   async login({ email, password }: LoginDto): Promise<LoginResponse> {
@@ -32,9 +42,13 @@ export class AuthService {
     }
     
     const redisService = await this.getRedisService()
-    const createSessionResponse = await handleObservable(redisService.CreateSession({userId:user.id}))
+    const session = this.generateSession(user.id)
+    const createSessionResponse = await handleObservable(redisService.CreateSession(session))
+    if(!createSessionResponse.success) {
+      throw new RpcInternalException("an error has occured during attempt to create the session")
+    }
     
-    return {user, sessionId: createSessionResponse.session.id};
+    return {user, session: createSessionResponse.session};
   }
 
   @TraceMethod()
@@ -68,8 +82,9 @@ export class AuthService {
     }
     
     const redisService = await this.getRedisService()
+    const session = this.generateSession(createdUser.id)
 
-    const createSessionResponse = await handleObservable(redisService.CreateSession({userId:createdUser.id}))
+    const createSessionResponse = await handleObservable(redisService.CreateSession(session))
     if (!createSessionResponse.success) {
       throw new RpcInternalException(createSessionResponse.message)
     }
@@ -77,12 +92,11 @@ export class AuthService {
     span.setStatus({code: SpanStatusCode.OK})
 
     delete createdUser.password
-    return {user: createdUser, sessionId: createSessionResponse.session.id};
+    return {user: createdUser, session: createSessionResponse.session};
   }
 
   @TraceMethod()
   async resetPassword({id: userId, oldPassword, newPassword, confirmNewPassword}: ResetPasswordDto): Promise<EmptyBody> {
-    // this logic must be moved to outside to a validator
     if (oldPassword == newPassword) {
       throw new RpcInvalidArgumentException("old and new password are same")
     }
@@ -131,5 +145,20 @@ export class AuthService {
   private async getUsersService(){
     const usersGrpcAddr = await this.registryService.discover("users")
     return getUsersGrpcService(usersGrpcAddr).getService()
+  }
+
+  private generateSession(userId: number): CreateSessionRequest {
+    const sessionId = uuid()
+    
+    console.log(Date.now(), this.cookieMaxAge)
+    return {
+      session :{
+        id: sessionId,
+        userId,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + this.cookieMaxAge,
+        cookieMaxAge: this.cookieMaxAge
+      }
+    }
   }
 }

@@ -4,6 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 package redis;
 option go_package = "ms/gateway/pb";
+import "auth.proto";
 
 service RedisService {
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
@@ -13,7 +14,7 @@ service RedisService {
 }
 
 message CreateSessionRequest {
-    int32 userId = 1;
+    auth.Session session = 1;
 }
 
 message DeleteSessionRequest {
@@ -30,22 +31,15 @@ message AuthValidateSessionRequest {
 }
 
 message AuthValidateSessionResponse {
-    Session session = 1;
+    auth.Session session = 1;
     string message = 2;
     bool success = 3;
 }
 
 message CreateSessionResponse {
-    Session session = 1;
+    auth.Session session = 1;
     string message = 2;
     bool success = 3;
-}
-
-message Session {
-    string id = 1;
-    int32 userId = 2;
-    google.protobuf.Timestamp createdAt = 3;
-    int64 expiresAt = 4;
 }
 
 message GetSessionRequest {
@@ -53,5 +47,5 @@ message GetSessionRequest {
 }
 
 message GetSessionResponse {
-    Session session = 1;
+    auth.Session session = 1;
 }

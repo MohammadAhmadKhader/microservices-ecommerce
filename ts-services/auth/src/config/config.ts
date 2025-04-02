@@ -19,7 +19,8 @@ const ServiceConfig = registerAs(INJECTION_TOKEN, () => {
         isDevelopment: process.env.ENV === "development",
         isStaging: process.env.ENV === "staging",
         logstashPort: Number(process.env.LOGSTASH_PORT),
-        logstashHost: process.env.LOGSTASH_HOST
+        logstashHost: process.env.LOGSTASH_HOST,
+        cookieMaxAge: Number(process.env.COOKIE_MAXAGE),
     }
 });
 

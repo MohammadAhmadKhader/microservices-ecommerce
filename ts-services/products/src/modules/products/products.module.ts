@@ -7,13 +7,9 @@ import { Product } from './entities/product.entity';
 import {v4 as uuid} from "uuid"
 import ServiceConfig from '@src/config/config';
 import { ProductTelemetrySubscriber } from './products.telemetry';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      load:[ServiceConfig]
-    }),
     TypeOrmModule.forFeature([Product]),
     MetricsModule,
   ],

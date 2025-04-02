@@ -12,7 +12,19 @@ export function ValidateGrpcPayload(dtoClass: any) {
       const errors = await validate(object);
       
       if (errors.length > 0) {
-        const firstErrMsg = Object.values(errors[0].constraints).join(", ")
+        let firstErrMsg: string = ""
+        if(errors[0].constraints) {
+          firstErrMsg = Object.values(errors[0].constraints).join(", ")
+        } else if(errors[0].children?.[0]?.constraints) {
+
+          firstErrMsg = Object.values(errors[0].children[0].constraints).join(", ")
+        } else if(errors[0].contexts?.[0]?.constraints) {
+
+          firstErrMsg = Object.values(errors[0].contexts[0].constraints).join(", ")
+        } else {
+          firstErrMsg = "Unknown error"
+        }
+        
         throw new RpcInvalidArgumentException(firstErrMsg)
       }
 
