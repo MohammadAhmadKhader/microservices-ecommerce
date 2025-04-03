@@ -5,4 +5,19 @@
         ]
     },
     "makefile.configureOnOpen": false,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+
+        // newly added to be excluded
+        "**/tsconfig.tsbuildinfo":true,
+        "**/tsconfig.build.tsbuildinfo":true,
+    },
+    "files.readonlyInclude": {
+        "**/src/protos/**": true
+    }
 }

@@ -21,6 +21,6 @@ async function bootstrap() {
   await mainApp.startAllMicroservices()
   await mainApp.listen(config.metricsPort ,config.serviceHost)
 
-  console.log(`Redis service is listening at port ${config.servicePort}`)
+  console.log(`Redis service is listening at port ${await mainApp.getUrl()}`)
 }
 bootstrap();

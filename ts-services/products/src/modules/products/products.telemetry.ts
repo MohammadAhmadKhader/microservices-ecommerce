@@ -16,7 +16,9 @@ function initTracingInstruments(provider: NodeTracerProvider) {
     registerInstrumentations({
         tracerProvider: provider,
         instrumentations: [
-            new GrpcInstrumentation()
+            new GrpcInstrumentation({
+              ignoreGrpcMethods:["Check"]
+          })
         ]
     });
 }

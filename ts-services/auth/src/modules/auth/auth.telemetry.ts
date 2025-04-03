@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { initTracing} from "@ms/common/observability/telemetry"
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
@@ -10,12 +10,17 @@ export let serviceTracer: Tracer
 function initTracingInstruments(provider: NodeTracerProvider) {
     registerInstrumentations({
         tracerProvider: provider,
-        instrumentations:[new GrpcInstrumentation()]
+        instrumentations:[
+            new GrpcInstrumentation({
+                ignoreGrpcMethods:["Check"],
+            }),
+        ] 
     })
 }
 
 const AUTH_TRACER_NAME = "auth-service"
 
+@Global()
 @Module({})
 export class TraceModule {
     constructor() {
@@ -24,5 +29,6 @@ export class TraceModule {
         serviceTracer = tracer
 
         initTracingInstruments(provider)
+        provider.register()
     }
 }

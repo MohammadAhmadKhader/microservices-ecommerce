@@ -6,7 +6,7 @@ export type ServiceConfig = ReturnType<typeof ServiceConfig>
 const ServiceConfig = registerAs(INJECTION_TOKEN, () => {
     return {
         dbHost: process.env.DB_HOST,
-        dbPort: Number(process.env.DB_PORT) || 3306,
+        dbPort: Number(process.env.DB_PORT),
         dbUser: process.env.DB_USER,
         dbName: process.env.DB_NAME,
         dbPassword: process.env.DB_PASSWORD,

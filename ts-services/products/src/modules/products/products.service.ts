@@ -4,7 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product, ProductProtobuf } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
-import { FindAllProductsRequest, FindAllProductsResponse, FindProductsByIdsResponse, FindOneProductRequest, DeleteOneProductRequest, FindProductsByIdsRequest, CreateProductResponse } from '@ms/common/generated/products'
+import { FindAllProductsRequest, FindAllProductsResponse, FindProductsByIdsResponse, FindOneProductRequest, DeleteOneProductRequest, FindProductsByIdsRequest, CreateProductResponse, FindOneProductResponse, UpdateProductResponse } from '@ms/common/generated/products'
 import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
@@ -30,8 +30,7 @@ export class ProductsService implements OnModuleInit {
     await broker.addConsumer(dlqConsumer)
   }
 
-  @TraceMethod()
-  async create(createProductDto: CreateProductDto): Promise<{product: ProductProtobuf}> {
+  async create(createProductDto: CreateProductDto): Promise<CreateProductResponse> {
     const span = trace.getActiveSpan()
     if (span) {
       span.setAttribute('payload', JSON.stringify(createProductDto));
@@ -39,10 +38,9 @@ export class ProductsService implements OnModuleInit {
 
     const product = await this.productRepository.save(createProductDto)
 
-    return { product: product.ConvertToProtobufType()}
+    return { product }
   }
 
-  @TraceMethod()
   async findAll({page, limit}: FindAllProductsRequest): Promise<FindAllProductsResponse> {
     const span = trace.getActiveSpan()
 
@@ -62,28 +60,20 @@ export class ProductsService implements OnModuleInit {
 
     span.setAttribute("db.rowCount", products.length)
 
-    const productsProtobufs = products.map((product)=>{
-      return new ProductProtobuf(product)
-    })
-
-    return {page, limit, count:count,products:productsProtobufs as any};
+    return {page, limit, count:count, products };
   }
 
-  @TraceMethod()
-  async findOne({id}: FindOneProductRequest): Promise<{product: ProductProtobuf}> {
+  async findOne({id}: FindOneProductRequest): Promise<FindOneProductResponse> {
     const product = await this.productRepository.findOneBy({
       id,
     })
     if (!product) {
       throw new RpcNotFoundException(`product with id '${id}' was not found`)
     }
-   
-    const productResponse = product.ConvertToProtobufType()
-    return {product: productResponse};
+
+    return { product };
   }
 
-  
-  @TraceMethod()
   async findProductsByIds({ ids }: FindProductsByIdsRequest): Promise<FindProductsByIdsResponse> {
     const products = await this.productRepository.find({
       where :{
@@ -91,15 +81,10 @@ export class ProductsService implements OnModuleInit {
       }
     })
 
-    const protobufsProducts = products.map((prod)=>{
-      return prod.ConvertToProtobufType()
-    }) 
-
-    return { products: protobufsProducts as unknown as Product[]}
+    return { products }
   }
 
-  @TraceMethod()
-  async update({id, ...updateData}: UpdateProductDto) : Promise<{product: ProductProtobuf}> {
+  async update({id, ...updateData}: UpdateProductDto) : Promise<UpdateProductResponse> {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
       throw new RpcNotFoundException(`product with id ${id} was not found`)
@@ -112,15 +97,18 @@ export class ProductsService implements OnModuleInit {
       updatedAt: new Date() // solving bug with inaccurate date update from typeORM
     })
 
-    return { product: product.ConvertToProtobufType() };
+    return { product };
   }
 
-  @TraceMethod()
   async remove({ id }:DeleteOneProductRequest): Promise<void> {
+    const product = await this.productRepository.findOneBy({id})
+    if (!product) {
+      throw new RpcNotFoundException(`product with id ${id} was not found`)
+    }
+    
     await this.productRepository.delete(id)
   }
 
-  @TraceMethod()
   async updateStock(productsIdsWithQty : UpdateStocksParams){
     const prodIdQtyMap = {}
     let caseStatements = ""

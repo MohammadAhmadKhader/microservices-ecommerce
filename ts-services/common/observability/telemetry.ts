@@ -1,15 +1,15 @@
 import {NodeTracerProvider, SimpleSpanProcessor} from "@opentelemetry/sdk-trace-node"
 import {OTLPTraceExporter} from "@opentelemetry/exporter-trace-otlp-http"
 import { trace, propagation, context, Span, Tracer, SpanStatusCode } from "@opentelemetry/api"
-import { Resource} from "@opentelemetry/resources"
+import { Resource, ResourceAttributes} from "@opentelemetry/resources"
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'; // Use the recommended constant for service name
-import {extractTraceParent} from "../utils"
 import {W3CTraceContextPropagator} from "@opentelemetry/core"
 
-export function initTracing(serviceName: string) {
+export function initTracing(serviceName: string, globalAttrs?: ResourceAttributes) {
     const provider = new NodeTracerProvider({
         resource:new Resource({
             [ATTR_SERVICE_NAME]: serviceName,
+            ...globalAttrs
         }),
     })
 

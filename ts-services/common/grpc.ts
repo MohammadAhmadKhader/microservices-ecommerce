@@ -1,12 +1,17 @@
 import { ClientGrpcProxy, ClientProxyFactory, Transport } from "@nestjs/microservices"
-import { ObservableUsersService, GrpcServiceName, ObservableSessionsService, ObservableProductsService, ObservableAuthService, ObservableOrdersService } from "./types"
+import { ObservableUsersService, GrpcServiceName, ObservableSessionsService, 
+  ObservableProductsService, ObservableAuthService, ObservableOrdersService,
+  ObservablePermissionsService,
+  ObservableRolesService,
+  ProtoPackageName,
+ } from "./types"
 import { join } from "path"
 
 export class CreateGrpcService<TGrpcService> {
     private client: ClientGrpcProxy
     private serviceName: string
   
-    constructor(grpcUrl:string, protoPath:string, packageName: string, serviceName: GrpcServiceName) {
+    constructor(grpcUrl:string, protoPath:string, packageName: ProtoPackageName, serviceName: GrpcServiceName) {
       this.serviceName = serviceName
       this.client = ClientProxyFactory.create({
         transport:Transport.GRPC,
@@ -37,6 +42,14 @@ export const getRedisGrpcService = (grpcUrl: string, protoPath = join(__dirname,
 
 export const getUsersGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/users.proto")) => {
   return new CreateGrpcService<ObservableUsersService>(grpcUrl, protoPath, "users", "UsersService")
+}
+
+export const getRolesGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/users.proto")) => {
+  return new CreateGrpcService<ObservableRolesService>(grpcUrl, protoPath, "roles", "RolesService")
+}
+
+export const getPermissionsGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/users.proto")) => {
+  return new CreateGrpcService<ObservablePermissionsService>(grpcUrl, protoPath, "permissions", "PermissionsService")
 }
 
 export const getAuthGrpcService = (grpcUrl: string, protoPath = join(__dirname, "./protos/auth.proto")) => {

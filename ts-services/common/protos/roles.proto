@@ -1,0 +1,78 @@
+syntax="proto3";
+
+package roles;
+option go_package = "ms/gateway/pb";
+import "shared.proto";
+
+service RolesService {
+    rpc FindAll(FindAllRolesRequest) returns (FindAllRolesResponse);
+    rpc FindOneById(FindOneByIdRequest) returns (FindOneByIdResponse);
+    rpc Create(CreateRoleRequest) returns (CreateRoleResponse);
+    rpc Update(UpdateRoleRequest) returns (UpdateRoleResponse);
+    rpc AssignRole(AssignRoleRequest) returns (shared.EmptyBody);
+    rpc UnAssignRole(UnAssignRoleRequest) returns (shared.EmptyBody);
+    rpc Delete(DeleteRoleRequest) returns (shared.EmptyBody);
+}
+
+message Role {
+    int32 id = 1;
+    string name = 2;
+    repeated Permission permissions = 3;
+}
+
+message Permission {
+    int32 id = 1;
+    string name = 2;
+    int32 createdAt = 3;
+}
+
+message FindAllRolesRequest {
+    int32 page = 1;
+    int32 limit = 2;
+}
+
+message FindAllRolesResponse {
+    int32 page = 1;
+    int32 limit = 2;
+    int64 count = 3;
+    repeated Role roles = 4;
+}
+
+message FindOneByIdRequest {
+    int32 id = 1;
+}
+
+message FindOneByIdResponse {
+    Role role = 1;
+}
+
+message CreateRoleRequest {
+    string name = 1;
+}
+
+message CreateRoleResponse {
+    Role role = 1;
+}
+
+message UpdateRoleRequest {
+    int32 id = 1;
+    string name = 2;
+}
+
+message UpdateRoleResponse {
+    Role role = 1;
+}
+
+message AssignRoleRequest {
+    int32 roleId = 1;
+    int32 userId = 2;
+}
+
+message UnAssignRoleRequest {
+    int32 roleId = 1;
+    int32 userId = 2;
+}
+
+message DeleteRoleRequest {
+    int32 id = 1;
+}

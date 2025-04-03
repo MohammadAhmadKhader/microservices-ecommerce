@@ -35,7 +35,7 @@ async function bootstrap() {
     await mainApp.startAllMicroservices()
     await mainApp.listen(config.metricsPort ,config.serviceHost)
 
-    console.log(`Javascript microservice connected at ${config.servicePort}`)
+    console.log(`Javascript microservice connected at ${await mainApp.getUrl()}`)
   }catch(err) {
     console.log(err)
   }

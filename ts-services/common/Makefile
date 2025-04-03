@@ -19,3 +19,5 @@ generate:
 	../../protos/users.proto \
 	../../protos/redis.proto \
 	../../protos/auth.proto \
+	../../protos/permissions.proto \
+	../../protos/roles.proto \

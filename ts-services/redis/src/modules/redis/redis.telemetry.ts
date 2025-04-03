@@ -8,7 +8,9 @@ import { Tracer } from "@opentelemetry/api";
 function initTracingInstruments(provider: NodeTracerProvider) {
     registerInstrumentations({
         tracerProvider: provider,
-        instrumentations:[new GrpcInstrumentation()]
+        instrumentations:[new GrpcInstrumentation({
+            ignoreGrpcMethods:["Check"]
+        })]
     })
 }
 

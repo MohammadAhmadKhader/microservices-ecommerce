@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { RedisController, RedisServiceName } from './redis.controller';
 import { RedisService } from './redis.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import {v4 as uuid} from "uuid"
 import { TraceModule } from './redis.telemetry';
-import ServiceConfig from '@src/config/config';
+import ServiceConfig, { INJECTION_TOKEN, ServiceConfig as TServiceConfig } from '@src/config/config';
 import { LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/common';
 
 @Module({
@@ -20,30 +20,34 @@ import { LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/
   controllers: [RedisController],
   providers: [RedisService, {
     provide:"REDIS_CLIENT",
-    useFactory:() => {
-      const serviceConfig = ServiceConfig()
+    inject:[ConfigService],
+    useFactory:(configService: ConfigService) => {
+      const cfg = configService.get<TServiceConfig>(INJECTION_TOKEN)
       const redis = new Redis({
-        host: serviceConfig.redisHost,
-        port: serviceConfig.redisPort,
-        password: serviceConfig.redisPassword,
+        host: cfg.redisHost,
+        port: cfg.redisPort,
+        password: cfg.redisPassword,
         db:0
       })
+
       return redis
     }
   },{
     provide:ConsulService,
-    useFactory: async ()=>{ 
+    inject:[ConfigService],
+    useFactory: async (configService: ConfigService)=>{ 
       const serviceId = uuid()
-      const serviceConfig = ServiceConfig()
+      const cfg = configService.get<TServiceConfig>(INJECTION_TOKEN)
+
       return new ConsulService({
         serviceId: serviceId,
         serviceName: 'redis',
-        serviceHost: serviceConfig.serviceHost,
-        servicePort: serviceConfig.servicePort, 
+        serviceHost: cfg.serviceHost,
+        servicePort: cfg.servicePort, 
         checkName:"redis-check",
         timeout:"1s",
         deregisterCriticalServiceAfter:"5s",
-        checkGrpcHost: serviceConfig.serviceUrl,
+        checkGrpcHost: cfg.serviceUrl,
         interval:"10s",
         checkId: serviceId,
       })
@@ -51,15 +55,17 @@ import { LoggingService, MetricsModule, HealthModule, ConsulService } from '@ms/
   },
   {
     provide:LoggingService,
-    useFactory: () => {
-      const serviceConfig = ServiceConfig()
+    inject:[ConfigService],
+    useFactory: (configService: ConfigService) => {
+      const cfg = configService.get<TServiceConfig>(INJECTION_TOKEN)
+
       return new LoggingService({
         service: RedisServiceName,
         username:"",
         password:"",
-        isProduction: serviceConfig.isProduction,
-        logstashHost: serviceConfig.logstashHost,
-        logstashPort: serviceConfig.logstashPort,
+        isProduction: cfg.isProduction,
+        logstashHost: cfg.logstashHost,
+        logstashPort: cfg.logstashPort,
       })
     }
   }],

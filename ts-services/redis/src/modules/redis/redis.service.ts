@@ -3,9 +3,7 @@ import Redis from "ioredis"
 import { CreateSessionResponse, DeleteSessionResponse, GetSessionResponse,
    AuthValidateSessionResponse } from '@ms/common/generated/redis';
 import { Session } from '@ms/common/generated/auth';
-import { toProtobufTimestamp} from "@ms/common/utils"
 import { trace } from '@opentelemetry/api';
-import { TraceMethod } from '@ms/common/observability/telemetry';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './dto/get-session.dto';
 
@@ -13,7 +11,6 @@ import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './dto/get-s
 export class RedisService {
   constructor(@Inject("REDIS_CLIENT") private redisClient : Redis) {}
 
-  @TraceMethod()
   async createSession({session}: CreateSessionDto): Promise<CreateSessionResponse> {
     const span = trace.getActiveSpan()
     try{
@@ -47,7 +44,6 @@ export class RedisService {
       }
     }
   
-  @TraceMethod()
   async getSession({sessionId}: GetSessionDto): Promise<GetSessionResponse> {
     const span = trace.getActiveSpan()
     try {
@@ -70,7 +66,6 @@ export class RedisService {
     }
   }
 
-  @TraceMethod()
   async validateSession({sessionId}: ValidateSessionDto): Promise<AuthValidateSessionResponse> {
     const span = trace.getActiveSpan()
     try {
@@ -105,7 +100,6 @@ export class RedisService {
     }
   }
 
-  @TraceMethod()
   async deleteSession({sessionId} : DeleteSessionDto): Promise<DeleteSessionResponse> {
     const span = trace.getActiveSpan()
     try{

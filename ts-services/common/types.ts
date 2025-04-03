@@ -9,6 +9,8 @@ import { RedisService } from "./generated/redis"
 import { ProductsService } from "./generated/products"
 import { OrderService } from "./generated/orders"
 import { AuthService } from "./generated/auth"
+import { PermissionsService } from "./generated/permissions";
+import { RolesService } from "./generated/roles";
 
 export type AssertQueueParams = {queue: string, options: amqp.Options.AssertQueue}
 
@@ -63,7 +65,20 @@ export type ObservableSessionsService = ObservableService<RedisService>
 export type ObservableProductsService = ObservableService<ProductsService>
 export type ObservableOrdersService = ObservableService<OrderService>
 export type ObservableAuthService = ObservableService<AuthService>
+export type ObservableRolesService = ObservableService<RolesService>
+export type ObservablePermissionsService = ObservableService<PermissionsService>
 
-// TODO: rename SessionsService to Redis
-export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "RedisService"
-export type RegistryServiceName = "products" | "auth" | "orders" | "users" | "gateway" | "redis" 
+export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "RedisService" | "RolesService" | "PermissionsService"
+export type RegistryServiceName = "products" | "auth" | "orders" | "gateway" | "redis" 
+export type ProtoPackageName = "products" | "auth" | "permissions" | "roles" | "orders" | "grpc.health.v1" | "redis" | "users"
+
+
+export interface ICreatedAtTimeStamp {
+  createdAt: Date
+}
+
+export interface IUpdatedAtTimeStamp {
+  updatedAt: Date
+}
+
+export type TimestampsMode = "updatedAt" | "createdAt" | "both"

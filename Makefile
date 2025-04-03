@@ -3,7 +3,6 @@ generate-protos:
 	@cd golang-services/common && make generate
 	@cd ts-services/common && make protos
 	@cd ts-services/auth && make protos
-	@cd ts-services/users && make protos
 	@cd ts-services/products && make protos
 	@cd ts-services/redis && make protos
 
@@ -17,7 +16,6 @@ run-prod:
 # 	nest start auth redis users
 
 build:
-	@cd ts-services/users && npm i
 	@cd ts-services/redis && npm i
 	@cd ts-services/common && npm i
 	@cd ts-services/products && npm i

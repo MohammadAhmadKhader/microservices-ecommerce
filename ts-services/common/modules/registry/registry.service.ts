@@ -1,9 +1,9 @@
-import {BeforeApplicationShutdown, Injectable, OnApplicationShutdown, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
+import { Injectable, OnModuleDestroy, OnModuleInit} from "@nestjs/common"
 import Consul from "consul";
 import { v4 as uuid } from 'uuid';
 import { DiscoveredService, RegistryOptions, RegistryServiceName } from "../../types";
-import { RpcException } from "@nestjs/microservices";
 import { getRandomInt } from "../../utils";
+import { RpcNotFoundException } from "../../rpcExceprions";
 
 @Injectable()
 export class ConsulService implements OnModuleInit, OnModuleDestroy {
@@ -12,6 +12,14 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     private options: RegistryOptions
 
     constructor(options: RegistryOptions){
+        if(!process.env.CONSUL_HOST) {
+            throw new Error("CONSUL_HOST env variable is required")
+        }
+        
+        if(!process.env.CONSUL_PORT) {
+            throw new Error("CONSUL_PORT env variable is required")
+        }
+
         this.consul = new Consul({
             host: process.env.CONSUL_HOST,
             port: Number(process.env.CONSUL_PORT),
@@ -70,7 +78,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
                 service: serviceName
             }) as DiscoveredService[]
             if (res.length == 0) {
-                throw new RpcException(`Service: ${serviceName} was requested and was not found`)
+                throw new RpcNotFoundException(`Service: ${serviceName} was requested and was not found`)
             }
             const selectedServiceIndex = getRandomInt(0, res.length - 1)
             const selectedInstance = res[selectedServiceIndex]
@@ -80,6 +88,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
             return instanceAddress+":"+instancePort
         } catch (error) {
             console.error(error)
+            throw error
         }
     }
 

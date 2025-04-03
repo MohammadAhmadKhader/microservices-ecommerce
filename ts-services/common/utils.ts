@@ -4,6 +4,7 @@ import { Observable, lastValueFrom } from "rxjs";
 import { ServerWritableStreamImpl } from '@grpc/grpc-js/build/src/server-call';
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 import { Long } from '@grpc/proto-loader';
+import { ICreatedAtTimeStamp, IUpdatedAtTimeStamp } from './types';
 
 export function toProtobufTimestamp(date: Date): any {
     const timestamp = new Timestamp();
@@ -81,4 +82,48 @@ export function IsLong(validationOptions?: ValidationOptions) {
         }
       });
     };
+}
+
+export function createdAtConverter(entity: ICreatedAtTimeStamp) {
+  entity.createdAt = toProtobufTimestamp(entity.createdAt)
+}
+
+export function createdAtArrayConverter(arr: ICreatedAtTimeStamp[]) {
+  const convertedArray = arr.map((item) => {
+    toProtobufTimestamp(item.createdAt)
+
+    return item
+  })
+
+  return convertedArray
+}
+
+export function updatedAtArrayConverter(arr: IUpdatedAtTimeStamp[]) {
+  const convertedArray = arr.map((item) => {
+    toProtobufTimestamp(item.updatedAt)
+
+    return item
+  })
+
+  return convertedArray
+}
+
+export function updatedAtConverter(item: IUpdatedAtTimeStamp) {
+  item.updatedAt = toProtobufTimestamp(item.updatedAt)
+}
+
+export function createdUpdatedAtConverter(item: ICreatedAtTimeStamp & IUpdatedAtTimeStamp) {
+  item.createdAt = toProtobufTimestamp(item.createdAt)
+  item.updatedAt = toProtobufTimestamp(item.updatedAt)
+}
+
+export function createdUpdatedAtArrayConverter(arr: (ICreatedAtTimeStamp & IUpdatedAtTimeStamp)[]) {
+  const convertedResult = arr.map((item) =>{
+    item.createdAt = toProtobufTimestamp(item.createdAt)
+    item.updatedAt = toProtobufTimestamp(item.updatedAt)
+
+    return item
+  })
+  
+  return convertedResult
 }

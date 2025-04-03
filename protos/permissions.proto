@@ -1,0 +1,35 @@
+syntax="proto3";
+
+package permissions;
+option go_package = "ms/gateway/pb";
+
+service PermissionsService {
+    rpc FindAll(FindAllPermissionsRequest) returns (FindAllPermissionsResponse);
+    rpc FindOneById(FindOneByIdRequest) returns (FindOneByIdResponse);
+}
+
+message Permission {
+    int32 id = 1;
+    string name = 2;
+}
+
+message FindAllPermissionsRequest {
+    int32 page = 1;
+    int32 limit = 2;
+}
+
+message FindAllPermissionsResponse {
+    int32 page = 1;
+    int32 limit = 2;
+    int64 count = 3;
+    repeated Permission permissions = 4;
+}
+
+message FindOneByIdRequest {
+    int32 id = 1;
+}
+
+message FindOneByIdResponse {
+    Permission permission = 1;
+}
+
