@@ -11,6 +11,9 @@ import { UnAssignRoleToUserDto } from './dto/unassign-role.dto';
 import { AssignRoleToUserDto } from './dto/assign-role.dto';
 import { GrpcMetricsInterceptor, LoggingInterceptor, PROTONAME_ROLES_SERVICE, TraceMethod } from '@ms/common';
 import { GenericExceptionFilter } from '@ms/common/exceptionFilters';
+import { CreateRoleResponse, FindAllRolesResponse, FindOneRoleByIdResponse, UpdateRoleResponse } from '@ms/common/generated/roles';
+import { EmptyBody } from '@ms/common/generated/shared';
+import { Role } from './entities/role.entity';
 
 const serviceName = PROTONAME_ROLES_SERVICE
 
@@ -24,49 +27,53 @@ export class RolesController {
   @GrpcMethod(serviceName, "Create")
   @ValidateGrpcPayload(CreateRoleDto)
   @TraceMethod()
-  async create(payload: CreateRoleDto) {
-    return await this.rolesService.create(payload);
+  async create(payload: CreateRoleDto): Promise<CreateRoleResponse> {
+    const result = await this.rolesService.create(payload);
+    return { role: result.role.toProto() }
   }
 
   @GrpcMethod(serviceName, "FindAll")
   @ValidateGrpcPayload(FindAllRolesDto)
   @TraceMethod()
-  async findAll(payload: FindAllRolesDto) {
-    return await this.rolesService.findAll(payload);
+  async findAll(payload: FindAllRolesDto): Promise<FindAllRolesResponse> {
+    const result = await this.rolesService.findAll(payload);
+    return { ...result, roles: Role.toProtoArray(result.roles)}
   }
 
   @GrpcMethod(serviceName, "FindOne")
   @ValidateGrpcPayload(FindOneRoleDto)
   @TraceMethod()
-  async findOne(payload: FindOneRoleDto) {
-    return await this.rolesService.findOne(payload);
+  async findOne(payload: FindOneRoleDto): Promise<FindOneRoleByIdResponse> {
+    const result = await this.rolesService.findOne(payload);
+    return { role: result.role.toProto() }
   }
 
   @GrpcMethod(serviceName, "Update")
   @ValidateGrpcPayload(UpdateRoleDto)
   @TraceMethod()
-  async update(payload: UpdateRoleDto) {
-    return await this.rolesService.update(payload);
+  async update(payload: UpdateRoleDto): Promise<UpdateRoleResponse> {
+    const result = await this.rolesService.update(payload);
+    return { role: result.role.toProto() }
   }
 
   @GrpcMethod(serviceName, "Delete")
   @ValidateGrpcPayload(DeleteRoleDto)
   @TraceMethod()
-  async remove(payload: DeleteRoleDto) {
+  async remove(payload: DeleteRoleDto): Promise<EmptyBody> {
     return await this.rolesService.remove(payload);
   }
 
   @GrpcMethod(serviceName, "AssignRole")
   @ValidateGrpcPayload(AssignRoleToUserDto)
   @TraceMethod()
-  async assignRole(payload: AssignRoleToUserDto) {
+  async assignRole(payload: AssignRoleToUserDto): Promise<EmptyBody> {
     return await this.rolesService.assignRoleToUser(payload);
   }
 
   @GrpcMethod(serviceName, "UnAssignRole")
   @ValidateGrpcPayload(UnAssignRoleToUserDto)
   @TraceMethod()
-  async unassignRole(payload: UnAssignRoleToUserDto) {
+  async unassignRole(payload: UnAssignRoleToUserDto): Promise<EmptyBody> {
     return await this.rolesService.unassignRole(payload);
   }
 }

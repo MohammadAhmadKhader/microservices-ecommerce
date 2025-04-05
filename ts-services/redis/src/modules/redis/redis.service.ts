@@ -6,6 +6,10 @@ import { Session } from '@ms/common/generated/auth';
 import { trace } from '@opentelemetry/api';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { DeleteSessionDto, GetSessionDto, ValidateSessionDto } from './dto/get-session.dto';
+import { SetKeyDto } from './dto/set-key.dto';
+import { DeleteKeyDto } from './dto/delete-key.dto';
+import { RpcInternalException } from '@ms/common';
+import { GetKeyDto } from './dto/get-key.dto';
 
 @Injectable()
 export class RedisService {
@@ -131,9 +135,42 @@ export class RedisService {
     }
   }
 
-  formatRedisKey(serviceName: string) {
+  async getKey({key}:GetKeyDto, serviceName: string) {
+    const res = await this.redisClient.get(this.formatRedisKey(serviceName, key))
+    return { value: res }
+  }
+
+  async setKey({key, value, ttl}: SetKeyDto, serviceName: string) {
+    const span = trace.getActiveSpan()
+    const res = await this.redisClient.set(this.formatRedisKey(serviceName, key), value, "EX", ttl || 0)
+    if(res !== "OK") {
+      const errMsg = "something went wrong during attempt to set a redis key"
+      span.setAttribute("error", true)
+      span.setAttribute("error.message", errMsg)
+
+      throw new RpcInternalException(errMsg)
+    }
+
+    return {}
+  }
+
+  async deleteKey({key}: DeleteKeyDto, serviceName: string) {
+    const span = trace.getActiveSpan()
+    const result = await this.redisClient.del(this.formatRedisKey(serviceName, key))
+    if(result === 0) {
+      const errMsg = "something went wrong during attempt to delete a redis key"
+      span.setAttribute("error", true)
+      span.setAttribute("error.message", errMsg)
+
+      throw new RpcInternalException(errMsg)
+    }
+
+    return {}
+  }
+
+  formatRedisKey(serviceName: string, sentKey: string) {
     const appName = "ms"
-    const key = `${appName}:${serviceName}`
+    const key = `${appName}:${serviceName}:${sentKey}`
     return key
   }
 

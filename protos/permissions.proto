@@ -5,7 +5,7 @@ option go_package = "ms/gateway/pb";
 
 service PermissionsService {
     rpc FindAll(FindAllPermissionsRequest) returns (FindAllPermissionsResponse);
-    rpc FindOneById(FindOneByIdRequest) returns (FindOneByIdResponse);
+    rpc FindOneById(FindOnePermissionByIdRequest) returns (FindOnePermissionByIdResponse);
 }
 
 message Permission {
@@ -25,11 +25,10 @@ message FindAllPermissionsResponse {
     repeated Permission permissions = 4;
 }
 
-message FindOneByIdRequest {
+message FindOnePermissionByIdRequest {
     int32 id = 1;
 }
 
-message FindOneByIdResponse {
+message FindOnePermissionByIdResponse {
     Permission permission = 1;
 }
-

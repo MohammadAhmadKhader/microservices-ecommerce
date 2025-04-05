@@ -1,4 +1,4 @@
-import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
+
 import { toProtobufTimestamp } from '@ms/common/utils';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -28,29 +28,20 @@ export class Product {
     @UpdateDateColumn()
     updatedAt: Date
 
-    ConvertToProtobufType=() =>{
-        return new ProductProtobuf(this)
+    ToProto() {
+        return {
+            id: this.id,
+            name: this.name,
+            description: this.description,
+            price: this.price,
+            quantity: this.quantity,
+            categoryId: this.categoryId,
+            createdAt: toProtobufTimestamp(this.createdAt),
+            updatedAt: toProtobufTimestamp(this.updatedAt)
+        }
     }
-}
 
-export class ProductProtobuf {
-    id: number
-    name: string
-    description: string
-    price: number
-    quantity: number
-    categoryId: number
-    createdAt: Timestamp
-    updatedAt: Timestamp
-
-    constructor(product :Product) {
-        this.id = product.id
-        this.name = product.name
-        this.description = product.description
-        this.price = product.price
-        this.quantity = product.quantity
-        this.categoryId = product.categoryId
-        this.createdAt = toProtobufTimestamp(product.createdAt)
-        this.updatedAt = toProtobufTimestamp(product.updatedAt)
+    static ToProtoArray(products: Product[]) {
+        return products.map((prod) => prod.ToProto())
     }
 }

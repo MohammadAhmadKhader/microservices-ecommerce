@@ -6,6 +6,7 @@ import { FindOnePermissionById } from './dto/findOne-permission.dto';
 import { ValidateGrpcPayload } from '@ms/common/decorators';
 import { GrpcMetricsInterceptor, LoggingInterceptor, PROTONAME_PERMISSIONS_SERVICE, TraceMethod } from '@ms/common';
 import { GenericExceptionFilter } from '@ms/common/exceptionFilters';
+import { FindAllPermissionsResponse, FindOnePermissionByIdResponse } from '@ms/common/generated/permissions';
 
 const serviceName = PROTONAME_PERMISSIONS_SERVICE
 
@@ -19,14 +20,14 @@ export class PermissionsController {
   @GrpcMethod(serviceName, "FindAll")
   @ValidateGrpcPayload(FindAllPermissionsDto)
   @TraceMethod()
-  async findAll(payload: FindAllPermissionsDto) {
+  async findAll(payload: FindAllPermissionsDto): Promise<FindAllPermissionsResponse> {
     return await this.permissionsService.findAll(payload);
   }
 
   @GrpcMethod(serviceName, "FindOne")
   @ValidateGrpcPayload(FindOnePermissionById)
   @TraceMethod()
-  async findOne(payload: FindOnePermissionById) {
+  async findOne(payload: FindOnePermissionById): Promise<FindOnePermissionByIdResponse> {
     return await this.permissionsService.findOne(payload);
   }
 }

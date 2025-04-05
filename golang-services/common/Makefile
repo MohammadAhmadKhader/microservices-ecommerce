@@ -11,4 +11,6 @@ generate:
 	../../protos/redis.proto \
 	../../protos/users.proto \
 	../../protos/shared.proto \
-	../../protos/orders.proto 
+	../../protos/orders.proto \
+	../../protos/roles.proto \
+	../../protos/permissions.proto \

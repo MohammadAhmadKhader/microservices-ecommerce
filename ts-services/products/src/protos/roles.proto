@@ -3,10 +3,11 @@ syntax="proto3";
 package roles;
 option go_package = "ms/gateway/pb";
 import "shared.proto";
+import "permissions.proto";
 
 service RolesService {
     rpc FindAll(FindAllRolesRequest) returns (FindAllRolesResponse);
-    rpc FindOneById(FindOneByIdRequest) returns (FindOneByIdResponse);
+    rpc FindOneById(FindOneRoleByIdRequest) returns (FindOneRoleByIdResponse);
     rpc Create(CreateRoleRequest) returns (CreateRoleResponse);
     rpc Update(UpdateRoleRequest) returns (UpdateRoleResponse);
     rpc AssignRole(AssignRoleRequest) returns (shared.EmptyBody);
@@ -17,13 +18,7 @@ service RolesService {
 message Role {
     int32 id = 1;
     string name = 2;
-    repeated Permission permissions = 3;
-}
-
-message Permission {
-    int32 id = 1;
-    string name = 2;
-    int32 createdAt = 3;
+    repeated permissions.Permission permissions = 3;
 }
 
 message FindAllRolesRequest {
@@ -38,11 +33,11 @@ message FindAllRolesResponse {
     repeated Role roles = 4;
 }
 
-message FindOneByIdRequest {
+message FindOneRoleByIdRequest {
     int32 id = 1;
 }
 
-message FindOneByIdResponse {
+message FindOneRoleByIdResponse {
     Role role = 1;
 }
 

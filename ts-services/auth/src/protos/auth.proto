@@ -6,6 +6,7 @@ import "google/protobuf/timestamp.proto";
 
 package auth;
 import "shared.proto";
+import "roles.proto";
 
 service AuthService {
     rpc Login(LoginRequest) returns (LoginResponse);
@@ -44,6 +45,7 @@ message AuthUser {
     string mobileNumber = 5;
     google.protobuf.Timestamp createdAt = 6;
     google.protobuf.Timestamp updatedAt = 7;
+    repeated roles.Role roles = 8;
 }
 
 message Session {

@@ -1,52 +1,286 @@
 {
-    "users":[],
-    "role":[
+    "users":[
+        {
+            "id": 1,
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com",
+            "mobileNumber": "123-456-7890",
+            "createdAt": "2025-04-05T10:00:00.000Z",
+            "updatedAt": "2025-04-05T10:00:00.000Z"
+        },
+        {
+            "id": 2,
+            "firstName": "Jane",
+            "lastName": "Smith",
+            "email": "jane.smith@example.com",
+            "mobileNumber": "234-567-8901",
+            "createdAt": "2025-04-05T10:05:00.000Z",
+            "updatedAt": "2025-04-05T10:05:00.000Z"
+        },
+        {
+            "id": 3,
+            "firstName": "Alex",
+            "lastName": "Johnson",
+            "email": "alex.johnson@example.com",
+            "mobileNumber": "345-678-9012",
+            "createdAt": "2025-04-05T10:10:00.000Z",
+            "updatedAt": "2025-04-05T10:10:00.000Z"
+        }
+    ],
+    "permissions":[
         {
             "id":1,
-            "name":"PRODUCT:VIEW"
+            "name":"DASHBOARD:PRODUCT:VIEW"
         },
         {
             "id":2,
-            "name":"PRODUCT:CREATE"
+            "name":"DASHBOARD:PRODUCT:CREATE"
         },
         {
             "id":3,
-            "name":"PRODUCT:UPDATE"
+            "name":"DASHBOARD:PRODUCT:UPDATE"
         },
         {
             "id":4,
-            "name":"PRODUCT:DELETE"
+            "name":"DASHBOARD:PRODUCT:DELETE"
         },
         {
             "id":5,
-            "name":"ROLE:VIEW"
+            "name":"DASHBOARD:ROLE:VIEW"
         },{
             "id":6,
-            "name":"ROLE:CREATE"
+            "name":"DASHBOARD:ROLE:CREATE"
         },
         {
             "id":7,
-            "name":"ROLE:UPDATE"
+            "name":"DASHBOARD:ROLE:UPDATE"
         },
         {
             "id":8,
-            "name":"ROLE:DELETE"
+            "name":"DASHBOARD:ROLE:DELETE"
         },
         {
             "id":9,
-            "name":"ORDER:VIEW"
+            "name":"DASHBOARD:ROLE:ASSIGN"
         },
         {
             "id":10,
-            "name":"ORDER:PURCHASE"
+            "name":"DASHBOARD:ROLE:UN_ASSIGN"
         },
         {
             "id":11,
-            "name":"ORDER:UPDATE_STATUS"
+            "name":"DASHBOARD:ORDER:VIEW"
         },
         {
             "id":12,
+            "name":"ORDER:PURCHASE"
+        },
+        {
+            "id":13,
+            "name":"ORDER:UPDATE_STATUS"
+        },
+        {
+            "id":14,
             "name":"ORDER:CANCEL"
+        },
+        {
+            "id":15,
+            "name":"USER:VIEW"
+        },
+        {
+            "id":16,
+            "name":"USER:CREATE"
+        },
+        {
+            "id":17,
+            "name":"USER:UPDATE"
+        },
+        {
+            "id":18,
+            "name":"USER:DELETE"
+        },
+        {
+            "id":19,
+            "name":"DASHBOARD:USER:DELETE"
         }
-    ]
+    ],
+    "roles":[
+        {
+            "id":1,
+            "name":"Admin"
+        },
+        {
+            "id":2,
+            "name":"User"
+        },
+        {
+            "id":3,
+            "name":"SuperAdmin"
+        }
+    ],
+    "userRole":[
+        {
+            "userId":1,
+            "roleId":1
+        },
+        {
+            "userId": 2,
+            "roleId": 2
+        },
+        {
+            "userId": 3,
+            "roleId": 3
+        }
+    ],
+    "rolePermission": [
+    {
+      "roleId": 1,
+      "permissionId": 1
+    },
+    {
+      "roleId": 1,
+      "permissionId": 2
+    },
+    {
+      "roleId": 1,
+      "permissionId": 3
+    },
+    {
+      "roleId": 1,
+      "permissionId": 4
+    },
+    {
+      "roleId": 1,
+      "permissionId": 5
+    },
+    {
+      "roleId": 1,
+      "permissionId": 6
+    },
+    {
+      "roleId": 1,
+      "permissionId": 7
+    },
+    {
+      "roleId": 1,
+      "permissionId": 8
+    },
+    {
+      "roleId": 1,
+      "permissionId": 9
+    },
+    {
+      "roleId": 1,
+      "permissionId": 10
+    },
+    {
+      "roleId": 1,
+      "permissionId": 11
+    },
+    {
+      "roleId": 2,
+      "permissionId": 12
+    },
+    {
+      "roleId": 2,
+      "permissionId": 13
+    },
+    {
+      "roleId": 2,
+      "permissionId": 14
+    },
+    {
+      "roleId": 2,
+      "permissionId": 15
+    },
+    {
+      "roleId": 2,
+      "permissionId": 16
+    },
+    {
+      "roleId": 2,
+      "permissionId": 17
+    },
+    {
+      "roleId": 2,
+      "permissionId": 18
+    },
+    {
+      "roleId": 3,
+      "permissionId": 1
+    },
+    {
+      "roleId": 3,
+      "permissionId": 2
+    },
+    {
+      "roleId": 3,
+      "permissionId": 3
+    },
+    {
+      "roleId": 3,
+      "permissionId": 4
+    },
+    {
+      "roleId": 3,
+      "permissionId": 5
+    },
+    {
+      "roleId": 3,
+      "permissionId": 6
+    },
+    {
+      "roleId": 3,
+      "permissionId": 7
+    },
+    {
+      "roleId": 3,
+      "permissionId": 8
+    },
+    {
+      "roleId": 3,
+      "permissionId": 9
+    },
+    {
+      "roleId": 3,
+      "permissionId": 10
+    },
+    {
+      "roleId": 3,
+      "permissionId": 11
+    },
+    {
+      "roleId": 3,
+      "permissionId": 12
+    },
+    {
+      "roleId": 3,
+      "permissionId": 13
+    },
+    {
+      "roleId": 3,
+      "permissionId": 14
+    },
+    {
+      "roleId": 3,
+      "permissionId": 15
+    },
+    {
+      "roleId": 3,
+      "permissionId": 16
+    },
+    {
+      "roleId": 3,
+      "permissionId": 17
+    },
+    {
+      "roleId": 3,
+      "permissionId": 18
+    },
+    {
+      "roleId": 3,
+      "permissionId": 19
+    }
+  ]
 }

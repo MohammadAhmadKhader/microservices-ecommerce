@@ -14,12 +14,12 @@ export class PermissionsService {
 
   async findAll({page, limit}: FindAllPermissionsDto) {
     const skip = (page - 1) * limit
-    const permissions = await this.permissionsRepository.find({
+    const [permissions, count] = await this.permissionsRepository.findAndCount({
       skip,
       take: limit 
     })
 
-    return { permissions };
+    return { page, limit, count, permissions };
   }
 
   async findOne({ id }: FindOnePermissionById) {

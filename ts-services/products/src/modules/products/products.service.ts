@@ -2,15 +2,15 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Product, ProductProtobuf } from './entities/product.entity';
+import { Product } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
-import { FindAllProductsRequest, FindAllProductsResponse, FindProductsByIdsResponse, FindOneProductRequest, DeleteOneProductRequest, FindProductsByIdsRequest, CreateProductResponse, FindOneProductResponse, UpdateProductResponse } from '@ms/common/generated/products'
+import { FindAllProductsRequest, FindOneProductRequest, DeleteOneProductRequest, FindProductsByIdsRequest, CreateProductResponse, FindOneProductResponse, UpdateProductResponse } from '@ms/common/generated/products'
 import { createConsumer, createDLQConsumer } from './broker';
 import { BrokerService } from '@ms/common/modules/broker/broker.service';
 import { UpdateStocksParams } from './types/types';
 import { trace } from '@opentelemetry/api';
 import { RpcFailedPreConditionException, RpcNotFoundException} from "@ms/common"
-import { TraceMethod } from '@ms/common/observability/telemetry';
+import { EmptyBody } from '@ms/common/generated/shared';
 
 @Injectable()
 export class ProductsService implements OnModuleInit {
@@ -30,7 +30,7 @@ export class ProductsService implements OnModuleInit {
     await broker.addConsumer(dlqConsumer)
   }
 
-  async create(createProductDto: CreateProductDto): Promise<CreateProductResponse> {
+  async create(createProductDto: CreateProductDto) {
     const span = trace.getActiveSpan()
     if (span) {
       span.setAttribute('payload', JSON.stringify(createProductDto));
@@ -41,7 +41,7 @@ export class ProductsService implements OnModuleInit {
     return { product }
   }
 
-  async findAll({page, limit}: FindAllProductsRequest): Promise<FindAllProductsResponse> {
+  async findAll({page, limit}: FindAllProductsRequest) {
     const span = trace.getActiveSpan()
 
     if (span) {
@@ -52,7 +52,7 @@ export class ProductsService implements OnModuleInit {
     const skip = (page - 1) * limit
     const [products, count] = await this.productRepository.findAndCount({
       order:{
-        createdAt:-1
+        createdAt:"DESC"
       },
       take:limit,
       skip:skip
@@ -63,7 +63,7 @@ export class ProductsService implements OnModuleInit {
     return {page, limit, count:count, products };
   }
 
-  async findOne({id}: FindOneProductRequest): Promise<FindOneProductResponse> {
+  async findOne({id}: FindOneProductRequest) {
     const product = await this.productRepository.findOneBy({
       id,
     })
@@ -74,17 +74,20 @@ export class ProductsService implements OnModuleInit {
     return { product };
   }
 
-  async findProductsByIds({ ids }: FindProductsByIdsRequest): Promise<FindProductsByIdsResponse> {
+  async findProductsByIds({ ids }: FindProductsByIdsRequest) {
     const products = await this.productRepository.find({
       where :{
         id : In(ids)
+      },
+      order: {
+        createdAt:"DESC"
       }
     })
 
     return { products }
   }
 
-  async update({id, ...updateData}: UpdateProductDto) : Promise<UpdateProductResponse> {
+  async update({id, ...updateData}: UpdateProductDto) {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
       throw new RpcNotFoundException(`product with id ${id} was not found`)
@@ -100,13 +103,14 @@ export class ProductsService implements OnModuleInit {
     return { product };
   }
 
-  async remove({ id }:DeleteOneProductRequest): Promise<void> {
+  async remove({ id }:DeleteOneProductRequest): Promise<EmptyBody> {
     const product = await this.productRepository.findOneBy({id})
     if (!product) {
       throw new RpcNotFoundException(`product with id ${id} was not found`)
     }
     
     await this.productRepository.delete(id)
+    return {}
   }
 
   async updateStock(productsIdsWithQty : UpdateStocksParams){

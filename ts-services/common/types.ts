@@ -71,14 +71,3 @@ export type ObservablePermissionsService = ObservableService<PermissionsService>
 export type GrpcServiceName = "OrderService" | "ProductsService" | "AuthService" | "UsersService" | "Health" | "RedisService" | "RolesService" | "PermissionsService"
 export type RegistryServiceName = "products" | "auth" | "orders" | "gateway" | "redis" 
 export type ProtoPackageName = "products" | "auth" | "permissions" | "roles" | "orders" | "grpc.health.v1" | "redis" | "users"
-
-
-export interface ICreatedAtTimeStamp {
-  createdAt: Date
-}
-
-export interface IUpdatedAtTimeStamp {
-  updatedAt: Date
-}
-
-export type TimestampsMode = "updatedAt" | "createdAt" | "both"

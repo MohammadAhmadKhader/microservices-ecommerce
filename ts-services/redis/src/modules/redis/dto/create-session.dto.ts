@@ -2,12 +2,11 @@ import { CreateSessionRequest } from "@ms/common/generated/redis"
 import {Min, IsNotEmpty, IsNumber, IsString, IsUUID, IsBoolean, ValidateNested} from "class-validator"
 import { Type } from 'class-transformer';
 import { Transform } from 'class-transformer';
-import { IsLong } from "@ms/common/utils";
 import { Long } from "@grpc/proto-loader";
 
 class Session {
     @IsUUID("4",{message:"sessionId is invalid uuid"})
-    @IsString({message:"sessionId must be a number"})
+    @IsString({message:"sessionId must be a string"})
     @IsNotEmpty({message:"sessionId is required"})
     id: string;
 

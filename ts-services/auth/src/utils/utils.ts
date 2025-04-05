@@ -1,4 +1,3 @@
-import { toProtobufTimestamp } from '@ms/common/utils';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { INJECTION_TOKEN, ServiceConfig } from '@src/config/config';
@@ -42,7 +41,7 @@ export function createDbModule(subescribers?: TypeOrmModuleOptions["subscribers"
             autoLoadEntities:true,
             logging:true,
             synchronize:true,
-            subscribers:[...(subescribers as any)]
+            subscribers: (subescribers as [])?.length > 0 ? [...(subescribers as any)] : []
           }
         }
   })

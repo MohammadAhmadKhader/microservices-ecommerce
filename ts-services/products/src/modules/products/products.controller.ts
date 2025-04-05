@@ -4,11 +4,14 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { GrpcMetricsInterceptor, LoggingInterceptor, GenericExceptionFilter, TraceMethod } from '@ms/common';
-import { ConvertTimeStamps, ValidateGrpcPayload } from "@ms/common/decorators";
+import { ValidateGrpcPayload } from "@ms/common/decorators";
 import { DeleteProductDto } from './dto/delete-product.dto';
 import { FindAllProductsDto } from './dto/findAll-product.dto';
 import { FindOneProductDto } from './dto/findOne-product.dto';
 import { FindProductsByIds } from './dto/findByIds-product.dto';
+import { CreateProductResponse, FindAllProductsResponse, FindOneProductResponse, FindProductsByIdsResponse, UpdateProductResponse } from '@ms/common/generated/products';
+import { Product } from './entities/product.entity';
+import { EmptyBody } from '@ms/common/generated/shared';
 
 export const ProductService = "ProductsService"
 
@@ -22,48 +25,47 @@ export class ProductsController {
   @GrpcMethod(ProductService, "Create")
   @ValidateGrpcPayload(CreateProductDto)
   @TraceMethod()
-  @ConvertTimeStamps("product", "both", true)
-  create(createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  async create(createProductDto: CreateProductDto): Promise<CreateProductResponse> {
+    const result = await this.productsService.create(createProductDto);
+    return { ...result, product: result.product.ToProto()}
   }
 
   @GrpcMethod(ProductService, "FindAll")
   @ValidateGrpcPayload(FindAllProductsDto)
   @TraceMethod()
-  @ConvertTimeStamps("products", "both", true)
-  async findAll(data: FindAllProductsDto) {
-    return this.productsService.findAll(data);
+  async findAll(data: FindAllProductsDto): Promise<FindAllProductsResponse> {
+    const result = await this.productsService.findAll(data)
+    return { ...result, products: Product.ToProtoArray(result.products)};
   }
 
   @GrpcMethod(ProductService, "FindProductsByIds")
   @ValidateGrpcPayload(FindProductsByIds)
   @TraceMethod()
-  @ConvertTimeStamps("products", "both", true)
-  findProductsByIds(data: FindProductsByIds) {
-    return this.productsService.findProductsByIds(data);
+  async findProductsByIds(data: FindProductsByIds): Promise<FindProductsByIdsResponse> {
+    const result = await this.productsService.findProductsByIds(data);
+    return { products: Product.ToProtoArray(result.products) }
   }
 
   @GrpcMethod(ProductService, "FindOne")
   @ValidateGrpcPayload(FindOneProductDto)
-  @TraceMethod()
-  @ConvertTimeStamps("product", "both", true)
-  findOne(data: FindOneProductDto) {
-    return this.productsService.findOne(data);
+  async findOne(data: FindOneProductDto): Promise<FindOneProductResponse> {
+    const result = await this.productsService.findOne(data);
+    return { product: result.product.ToProto() }
   }
 
   @GrpcMethod(ProductService, "Update")
   @ValidateGrpcPayload(UpdateProductDto)
   @TraceMethod()
-  @ConvertTimeStamps("product", "both", true)
-  update(data: UpdateProductDto) {
-    return this.productsService.update(data);
+  async update(data: UpdateProductDto): Promise<UpdateProductResponse> {
+    const result = await this.productsService.update(data);
+    return { product: result.product.ToProto() }
   }
 
   @GrpcMethod(ProductService, "DeleteOne")
   @ValidateGrpcPayload(DeleteProductDto)
   @TraceMethod()
-  remove(data : DeleteProductDto) {
-    return this.productsService.remove(data);
+  async remove(data : DeleteProductDto): Promise<EmptyBody> {
+    return await this.productsService.remove(data);
   }
 }
 

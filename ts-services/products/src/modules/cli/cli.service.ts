@@ -54,7 +54,7 @@ export class SeederCommand extends CommandRunner {
     }
     
     @Option({
-        flags:"-sj, --sync-json",
+        flags:"-j, --sync-json",
         description:"replaces the data in the json file with the one in the database"
     })
     async syncJSONwithDB() {
@@ -67,7 +67,7 @@ export class SeederCommand extends CommandRunner {
     }
 
     @Option({
-        flags:"-sd, --sync-db",
+        flags:"-d, --sync-db",
         description:"adds the records/rows that exists in the json and does not exist in the database to the database"
     })
     async syncDBwithJSON() {

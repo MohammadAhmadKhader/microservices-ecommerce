@@ -1,10 +1,10 @@
-import { ProductProtobuf } from "../entities/product.entity"
+import { Product } from "@products/entities/product.entity"
 
 export interface FindAllProducts {
     page: number
     limit: number
     count: number
-    products: ProductProtobuf[]
+    products: Product[]
 }
 
 export interface OrderCompletedMessage {

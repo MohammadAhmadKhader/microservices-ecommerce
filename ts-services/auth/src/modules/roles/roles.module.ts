@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
 import { SharedModule } from '../shared/shared.module';
 import { UsersModule } from '../users/users.module';
+import { RolePermission } from './entities/rolePermission.entity';
+import { UserRole } from '../users/entities/userRole.entity';
 
 @Module({
   imports:[
-    TypeOrmModule.forFeature([Role]),
+    TypeOrmModule.forFeature([Role, RolePermission, UserRole]),
     SharedModule,
     UsersModule
   ],

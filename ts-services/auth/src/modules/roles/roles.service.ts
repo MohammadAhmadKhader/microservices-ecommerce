@@ -6,21 +6,18 @@ import { FindAllRolesDto } from './dto/findAll-role.dto';
 import { FindOneRoleDto } from './dto/findOne-role.dto';
 import { DeleteRoleDto } from './dto/delete-role.dto';
 import { Role } from './entities/role.entity';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { RpcAlreadyExistsException, RpcNotFoundException } from '@ms/common/rpcExceprions';
 import { AssignRoleToUserDto } from './dto/assign-role.dto';
 import { UnAssignRoleToUserDto } from './dto/unassign-role.dto';
-import { handleObservable } from '@ms/common/utils';
-import { getUsersGrpcService } from '@ms/common/grpc';
-import { ConsulService } from '@ms/common';
-import { UsersService } from '../users/users.service';
-import { Permission } from '../permissions/entities/permission.entity';
+import { UserRole } from '../users/entities/userRole.entity';
+import { Long } from '@grpc/proto-loader';
 
 @Injectable()
 export class RolesService {
   constructor(
     @InjectRepository(Role) private readonly rolesRepository: Repository<Role>,
-    @Inject(UsersService) private readonly usersService: UsersService
+    @InjectRepository(UserRole) private readonly userRolesRepository: Repository<UserRole>,
   ) {}
 
   async create({name}: CreateRoleDto) {
@@ -41,18 +38,20 @@ export class RolesService {
 
   async findAll({page, limit}: FindAllRolesDto) {
     const skip = (page - 1) * limit
-    console.log(this.rolesRepository.target)
-    const roles = await this.rolesRepository.find({
+    const [roles, count] = await this.rolesRepository.findAndCount({
       take: limit,
       skip,
-      relations:["permissions"]
+      relations:["rolePermissions", "rolePermissions.permission"],
+      order:{ 
+        id: "DESC"
+      }
     })
 
-    return {roles};
+    return {page, limit, count, roles };
   }
 
   async findOne({ id }: FindOneRoleDto) {
-    const role = this.rolesRepository.findOne({
+    const role = await this.rolesRepository.findOne({
       where: {
         id
       }
@@ -89,37 +88,28 @@ export class RolesService {
   }
 
   async assignRoleToUser({roleId, userId}: AssignRoleToUserDto) {
-    const role = await this.rolesRepository.findOneBy({id: roleId})
+    const role = await this.userRolesRepository.findOneBy({roleId, userId})
     if (!role) {
       throw new RpcNotFoundException(`role with id '${roleId}' does not exist`)
     }
 
-    const { user } = await this.usersService.findOneById({id: userId})
-    console.log(user,"<---------------------- user")
-    user.roles.push(role)
-    await this.usersService.save(user)
+    const newAssignedUserRole = {
+      roleId,
+      userId,
+    }
+    await this.userRolesRepository.save(newAssignedUserRole)
     
     return {};
   }
 
   async unassignRole({roleId, userId}: UnAssignRoleToUserDto) {
-    const role = await this.rolesRepository.findOneBy({id: roleId})
-    if (!role) {
-      throw new RpcNotFoundException(`role with id '${roleId}' does not exist`)
+    const userRole = await this.userRolesRepository.findOneBy({roleId, userId})
+    if (!userRole) {
+      throw new RpcNotFoundException(`assignment with role id '${roleId}' and user id '${userId}' does not exist`)
     }
 
-   // const usersService = await this.getUsersService() 
-   // const findUserRepo = await handleObservable(usersService.FindOneUserById({id: userId}))
-//
-   // await this.rolesRepository.create()
+    await this.userRolesRepository.remove(userRole)
     
     return {};
   }
-
-  
-  //private async getUsersService(){
-  //    const usersGrpcAddr = await this.registryService.discover("users")
-  //    return getUsersGrpcService(usersGrpcAddr).getService()
-  //}
-  
 }

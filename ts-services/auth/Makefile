@@ -1,4 +1,4 @@
-.PHONY: protos
+.PHONY: protos run-cli
 
 protos:
 	bash -c "mkdir -p ./src/protos" && \
@@ -9,3 +9,6 @@ run-prod:
 
 run-dev:
 	npm run start:dev
+
+run-cli:
+	npm run cli $(ARGS)

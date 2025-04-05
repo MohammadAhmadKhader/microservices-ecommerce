@@ -1,13 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { LoginResponse, RegistResponse, ValidateSessionResponse as AuthValidateSessionResponse} from '@ms/common/generated/auth';
-import { EmptyBody} from '@ms/common/generated/shared';
-import { comparePassword, hashPassword } from './utils/hash';
+import { comparePassword, hashPassword } from '../../utils/hash';
 import { handleObservable } from '@ms/common/utils';
 import { getRedisGrpcService } from "@ms/common/grpc"
 import { ConsulService } from '@ms/common/modules/registry/registry.service';
-import { context, SpanStatusCode, trace, ROOT_CONTEXT } from '@opentelemetry/api';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { RpcAlreadyExistsException, RpcInternalException, RpcInvalidArgumentException, RpcUnauthorizedException } from "@ms/common/rpcExceprions"
-import { TraceMethod } from '@ms/common/observability/telemetry';
 import { LoginDto } from './dto/login-dto';
 import { ResetPasswordDto } from './dto/reset-password-dto';
 import { ValidateSessionDto } from './dto/validate-session-dto';
@@ -28,10 +25,10 @@ export class AuthService {
     this.cookieMaxAge = this.configService.get<ServiceConfig>(INJECTION_TOKEN).cookieMaxAge
   }
 
-  async login({ email, password }: LoginDto): Promise<LoginResponse> {
+  async login({ email, password }: LoginDto) {
     const span = trace.getActiveSpan()
   
-    const userByEmailResp = await this.usersService.findOneByEmail({email})
+    const userByEmailResp = await this.usersService.findOneByEmailWithDetails({email})
     const user = userByEmailResp?.user
     if (!user) {
       const errMsg = "wrong email or password"
@@ -56,10 +53,10 @@ export class AuthService {
     if(!createSessionResponse.success) {
       throw new RpcInternalException("an error has occured during attempt to create the session")
     }
-    return {user, session: createSessionResponse.session};
+    return { user, session: createSessionResponse.session};
   }
 
-  async regist({email, password, firstName, lastName}): Promise<RegistResponse> {
+  async regist({email, password, firstName, lastName}) {
     const span = trace.getActiveSpan()
 
     const userByEmailResp = await this.usersService.findOneByEmail({email})
@@ -101,7 +98,7 @@ export class AuthService {
     return {user: createdUser, session: createSessionResponse.session};
   }
 
-  async resetPassword({id: userId, oldPassword, newPassword, confirmNewPassword}: ResetPasswordDto): Promise<EmptyBody> {
+  async resetPassword({id: userId, oldPassword, newPassword, confirmNewPassword}: ResetPasswordDto) {
     const span = trace.getActiveSpan()
     if (oldPassword == newPassword) {
       const errMsg = "old and new password are same"
@@ -133,7 +130,7 @@ export class AuthService {
     return {};
   }
 
-  async validateSession({sessionId}: ValidateSessionDto): Promise<AuthValidateSessionResponse> {
+  async validateSession({sessionId}: ValidateSessionDto) {
     const span = trace.getActiveSpan()
     
     const redisService = await this.getRedisService()

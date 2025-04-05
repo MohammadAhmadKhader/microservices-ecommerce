@@ -1,6 +1,8 @@
 import { Permission } from '@src/modules/permissions/entities/permission.entity';
 import { User } from '@src/modules/users/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { UserRole } from '@src/modules/users/entities/userRole.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { RolePermission } from './rolePermission.entity';
 
 @Entity()
 export class Role {
@@ -10,10 +12,24 @@ export class Role {
     @Column({ unique: true })
     name: string;
 
-    @ManyToMany(() => Permission, (perm)=> perm.roles, {cascade: true})
-    @JoinTable()
-    permissions: Permission[]
+    @OneToMany(() => RolePermission, (perm)=> perm.role)
+    rolePermissions: RolePermission[]
 
-    @ManyToMany(() => User, (user)=> user.roles)
-    users: User[]
+    @OneToMany(() => UserRole, (userRole) => userRole.role)
+    userRoles: UserRole[]
+
+    toProto() {
+        console.log(this.rolePermissions,"role permissions")
+        return {
+            id: this.id,
+            name: this.name,
+            permissions: this.rolePermissions.map((rolePermissions) => {
+                return rolePermissions.permission
+            })
+        }
+    }
+
+    static toProtoArray(roles: Role[]) {
+        return roles.map((role) => role.toProto())
+    }
 }

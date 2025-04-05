@@ -2,13 +2,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
-import {toProtobufTimestamp} from "@ms/common"
-import { FindAllUsersResponse, UpdateUserRequest } from '@ms/common/generated/users';
 import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
-import { TraceMethod } from '@ms/common/observability/telemetry';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { FindAllDto } from './dto/findAll-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -29,29 +27,20 @@ export class UsersService {
       }
     })
 
-    if (user) {
-      user.createdAt = toProtobufTimestamp(user.createdAt)
-      user.updatedAt = toProtobufTimestamp(user.updatedAt)
-    }
-
     return { user };
   }
 
-  async findAll({page, limit}: FindAllDto) : Promise<FindAllUsersResponse> {
-    const count = await this.usersRepository.count()
+  async findAll({page, limit}: FindAllDto) {
     const skip = (page - 1) * limit;
-
-    let users = await this.usersRepository.find({
+    const [users, count] = await this.usersRepository.findAndCount({
       skip,
       take: limit,
-      select: ["id", "firstName","lastName", "email", "createdAt", "updatedAt"]
+      select: ["id", "firstName","lastName", "email", "createdAt", "updatedAt"], 
+      order: {
+        createdAt: 'DESC'
+      }
     })
 
-    // users = users.map((user)=>{
-    //   user.createdAt = toProtobufTimestamp(user.createdAt)
-    //   user.updatedAt = toProtobufTimestamp(user.updatedAt)
-    //   return user
-    // })
     return {page, limit, count, users}
   }
 
@@ -59,27 +48,42 @@ export class UsersService {
     const user = await this.usersRepository.findOne({
       where:{
         id
-      },
-      relations:["roles"]
+      }
     })
-    // if (user) {
-    //   user.createdAt = toProtobufTimestamp(user.createdAt)
-    //   user.updatedAt = toProtobufTimestamp(user.updatedAt)
-    // }
     
     return { user }
   }
 
   async findOneByEmail({email}) {
-    const user = await this.usersRepository.findOneBy({email});
-    if (user) {
-      user.createdAt = toProtobufTimestamp(user.createdAt)
-      user.updatedAt = toProtobufTimestamp(user.updatedAt)
-    }
+    const user = await this.usersRepository.findOne(
+      {
+        where: {
+          email
+        }
+      }
+    );
+
     return { user }
   }
 
-  async update(req: UpdateUserRequest) {
+  async findOneByEmailWithDetails({email}) {
+    const user = await this.usersRepository.findOne(
+      {
+        where: {
+          email
+        },
+        relations:[
+          "userRoles", 
+          "userRoles.role",
+          "userRoles.role.rolePermissions" ,
+          "userRoles.role.rolePermissions.permission"]
+        }
+    );
+
+    return { user }
+  }
+
+  async update(req: UpdateUserDto) {
     const {id, ...updateDto} = req
     const user = await this.usersRepository.findOneBy({id})
     if (!user) {
@@ -98,6 +102,7 @@ export class UsersService {
     }
 
     await this.usersRepository.delete(id)
+
     return {}
   }
 
