@@ -2,8 +2,8 @@ import { MicroserviceOptions , Transport} from '@nestjs/microservices';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
-import ServiceConfig from "@src/config/config"
-import { ConsoleLogger } from '@nestjs/common';
+import { INJECTION_TOKEN, ServiceConfig } from "@src/config/config"
+import {ConfigService} from "@nestjs/config"
 import { CommandFactory } from 'nest-commander';
 import { ProductsCLIModule } from './modules/cli/cli.module';
 
@@ -15,12 +15,10 @@ async function bootstrap() {
       return
     }
 
-    const config = ServiceConfig()
-    const appLogger = new ConsoleLogger()
-    const mainApp = await NestFactory.create(AppModule, {
-      logger: appLogger
-    })
-    mainApp.useLogger(appLogger)
+    const mainApp = await NestFactory.create(AppModule)
+    const configService = mainApp.get(ConfigService)
+    const config = configService.get<ServiceConfig>(INJECTION_TOKEN)
+    
     mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
@@ -35,7 +33,7 @@ async function bootstrap() {
     await mainApp.startAllMicroservices()
     await mainApp.listen(config.metricsPort ,config.serviceHost)
 
-    console.log(`Javascript microservice connected at ${await mainApp.getUrl()}`)
+    console.log(`Javascript microservice connected at ${config.serviceUrl}`)
   }catch(err) {
     console.log(err)
   }

@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import ServiceConfig from '@src/config/config';
+import { INJECTION_TOKEN, ServiceConfig } from '@src/config/config';
 import { CommandFactory } from 'nest-commander';
 import { AuthCliModule } from './modules/cli/cli.module';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   try {
@@ -13,8 +14,10 @@ async function bootstrap() {
       return
     }
 
-    const config = ServiceConfig()
     const mainApp = await NestFactory.create(AppModule)
+    const configService = mainApp.get(ConfigService)
+    const config = configService.get<ServiceConfig>(INJECTION_TOKEN)
+
     mainApp.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
@@ -34,7 +37,7 @@ async function bootstrap() {
     await mainApp.startAllMicroservices()
     await mainApp.listen(config.metricsPort ,config.serviceHost)
     
-    console.log(`auth service connected at ${await mainApp.getUrl()}`)
+    console.log(`auth service connected at ${config.serviceUrl}`)
   }catch(err) {
     console.log(err)
   }
