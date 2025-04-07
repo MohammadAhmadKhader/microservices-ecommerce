@@ -5,6 +5,8 @@ import (
 	"log"
 	"ms/common/discovery"
 	pb "ms/common/generated"
+
+	"google.golang.org/grpc"
 )
 
 type AuthGateway struct {
@@ -19,7 +21,7 @@ func NewAuthGateway(registry *discovery.Registry) *AuthGateway {
 
 const authService = "auth"
 
-func (g *AuthGateway) ValidateSession(ctx context.Context, sessionId string) (*pb.ValidateSessionResponse, error) {
+func (g *AuthGateway) ValidateSession(ctx context.Context, sessionId string, opts ...grpc.CallOption) (*pb.ValidateSessionResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, authService, g.registry)
 	if err != nil {
 		log.Println(err)
@@ -27,16 +29,16 @@ func (g *AuthGateway) ValidateSession(ctx context.Context, sessionId string) (*p
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	validationResponse, err := authClient.ValidateSession(ctx, &pb.ValidateSessionRequest{SessionId: sessionId})
+	validationResponse, err := authClient.ValidateSession(ctx, &pb.ValidateSessionRequest{SessionId: sessionId}, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-
+	
 	return validationResponse, err
 }
 
-func (g *AuthGateway) Register(ctx context.Context, registReq *pb.RegistRequest) (*pb.RegistResponse, error) {
+func (g *AuthGateway) Register(ctx context.Context, registReq *pb.RegistRequest, opts ...grpc.CallOption) (*pb.RegistResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, authService, g.registry)
 	if err != nil {
 		log.Println(err)
@@ -44,7 +46,7 @@ func (g *AuthGateway) Register(ctx context.Context, registReq *pb.RegistRequest)
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	registResponse, err := authClient.Regist(ctx, registReq)
+	registResponse, err := authClient.Regist(ctx, registReq, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -54,7 +56,7 @@ func (g *AuthGateway) Register(ctx context.Context, registReq *pb.RegistRequest)
 	return registResponse, err
 }
 
-func (g *AuthGateway) Login(ctx context.Context, loginReq *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (g *AuthGateway) Login(ctx context.Context, loginReq *pb.LoginRequest, opts ...grpc.CallOption) (*pb.LoginResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, authService, g.registry)
 	if err != nil {
 		log.Println(err)
@@ -62,7 +64,7 @@ func (g *AuthGateway) Login(ctx context.Context, loginReq *pb.LoginRequest) (*pb
 	}
 
 	authClient := pb.NewAuthServiceClient(conn)
-	loginResponse, err := authClient.Login(ctx, loginReq)
+	loginResponse, err := authClient.Login(ctx, loginReq, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err

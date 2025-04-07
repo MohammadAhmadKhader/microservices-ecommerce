@@ -40,7 +40,6 @@ func SetCookie(w http.ResponseWriter, r *http.Request, pbSession *pb.Session) (*
 	session.Values["sessionId"] = pbSession.GetId()
 	session.Values["expiresAt"] = pbSession.GetExpiresAt()
 	session.Values["createdAt"] = pbSession.GetCreatedAt()
-	session.Values["userId"] = pbSession.GetUserId()
 
 	err = session.Save(r, w)
 	if err != nil {

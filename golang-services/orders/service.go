@@ -2,23 +2,26 @@ package main
 
 import (
 	"context"
+	"log"
 
 	"ms/common"
 	pb "ms/common/generated"
 	"ms/orders/gateway"
 	"ms/orders/models"
 	"ms/orders/utils"
+
+	"google.golang.org/grpc/metadata"
 )
 
 type service struct {
-	productsGateway *gateway.Gateway
+	gateway *gateway.Gateway
 	store           OrdersStore
 }
 
-func NewService(store OrdersStore, productsGateway *gateway.Gateway) *service {
+func NewService(store OrdersStore, gateway *gateway.Gateway) *service {
 	return &service{
 		store:           store,
-		productsGateway: productsGateway,
+		gateway: gateway,
 	}
 }
 
@@ -50,39 +53,64 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 	ctx, span := tracer.Start(ctx, "CreateOrder OrdersService")
 	defer span.End()
 	
-	var productIds = []int32{}
-	for _, item := range p.Items {
-		productIds = append(productIds, item.ID)
-	}
-
-	_, err := s.productsGateway.GetProductsFromIds(ctx, productIds)
+	md , err := common.ExtractMD(ctx)
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
-	span.AddEvent("Returned response from productsGateway")
-	err = utils.ValidateOrder(p)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	
+	cartRes, err := s.gateway.GetUserCart(ctx)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		return nil, err
+	}
+	span.AddEvent("Returned response from carts service")
+	
+	productsIds := utils.CollectProductsIds(cartRes.CartItems)
+
+	log.Println(productsIds,"products Id's")
+	products, err := s.gateway.GetProductsFromIds(ctx, productsIds)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		return nil, err
+	}
+	span.AddEvent("Returned response from products service")
+	log.Println(products)
+
+	err = utils.ValidateReturnedProducts(products, cartRes.CartItems)
 	if err != nil {
 		utils.HandleSpanErr(&span, err)
 		return nil, common.ErrInvalidArgument(err.Error())
 	}
 
+	productsPricesMap := utils.MapProdutsIdsToPrice(products)
+
 	var orderItems = []models.OrderItem{}
 	var totalPrice float32 = 0
-	for i := 0; i < len(p.Items); i++ {
+	for i := 0; i < len(cartRes.CartItems); i++ {
+		currProdPrice := productsPricesMap[cartRes.CartItems[i].GetProductId()]
+
 		orderItems = append(orderItems, models.OrderItem{
-			ProductID: int(p.Items[i].ID),
-			OrderID:   1,
-			UnitPrice: float32(p.Items[i].UnitPrice),
-			Quantity:  int(p.Items[i].Quantity),
+			ProductID: int(cartRes.CartItems[i].GetProductId()),
+			UnitPrice: currProdPrice,
+			Quantity:  int(cartRes.CartItems[i].GetQuantity()),
 		})
 
-		totalPrice += (float32(p.Items[i].Quantity) * p.Items[i].UnitPrice)
+		totalPrice += (float32(cartRes.CartItems[i].GetQuantity()) * currProdPrice)
+	}
+
+	userId, err := common.ExtractUserID(ctx)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		// we have set here internal instead of unauthenticated assuming user/customer
+		// should not have reached here without userId
+		return nil, err
 	}
 
 	order := &models.Order{
-		UserID:     uint(p.UserId),
+		UserID:     uint(userId),
 		OrderItems: orderItems,
 		TotalPrice: totalPrice,
 	}
@@ -112,9 +140,13 @@ func (s *service) GetOrderById(ctx context.Context, p *pb.GetOrderByIdRequest) (
 }
 
 func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatusRequest) (*pb.Order, error) {
+	ctx, span := tracer.Start(ctx, "UpdateOrderStatus OrdersService")
+	defer span.End()
+
 	id := int(p.GetId())
 	order, err := s.store.GetOne(ctx, id)
 	if err != nil {
+		utils.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -124,6 +156,7 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	if order.Status == models.Completed {
 		order, err = s.store.UpdateStatusAndFetchItems(ctx, id, order)
 		if err != nil {
+			utils.HandleSpanErr(&span, err)
 			return nil, err
 		}
 
@@ -131,6 +164,7 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	} else {
 		order, err = s.store.UpdateStatus(ctx, id, order)
 		if err != nil {
+			utils.HandleSpanErr(&span, err)
 			return nil, err
 		}
 

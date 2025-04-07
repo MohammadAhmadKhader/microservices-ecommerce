@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -14,7 +15,12 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func InitTracer(ctx context.Context, endpoint string, serviceName string) (*trace.TracerProvider, error) {
+type TracingOptions struct {
+	TracerProviderOptions []trace.TracerProviderOption
+	ResourceAttributes []attribute.KeyValue
+}
+
+func InitTracer(ctx context.Context, endpoint string, serviceName string, opts ...TracingOptions) (*trace.TracerProvider, error) {
 	client := otlptracehttp.NewClient(
 		otlptracehttp.WithInsecure(),
 		otlptracehttp.WithEndpoint(endpoint))
@@ -29,18 +35,43 @@ func InitTracer(ctx context.Context, endpoint string, serviceName string) (*trac
 		samplingRatio = 0.1
 	}
 
+	var serviceOptions TracingOptions
+	if len(opts) > 0 {
+		serviceOptions = opts[0]
+	}
+
+	defaultAttrs := []attribute.KeyValue{
+		semconv.DBSystemMySQL,
+		semconv.TelemetrySDKLanguageGo,
+		semconv.TelemetrySDKNameKey.String("open-telemetry"),
+		semconv.MessagingProtocolKey.String("AMQP"),
+		semconv.ServiceNameKey.String(serviceName),
+	}
+	allAttrs := append(defaultAttrs, serviceOptions.ResourceAttributes...)
+
+	resourceOpts, err := resource.New(
+		ctx,
+		resource.WithSchemaURL(semconv.SchemaURL),
+		resource.WithAttributes(allAttrs...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mergedOptions := TracingOptions{
+		TracerProviderOptions: append(
+			[]trace.TracerProviderOption{
+				trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRatio))),
+				trace.WithBatcher(exporter),
+				trace.WithSpanProcessor(trace.NewBatchSpanProcessor(exporter)),
+				trace.WithResource(resourceOpts),
+			},
+			serviceOptions.TracerProviderOptions...,
+		),
+	}
+
 	provider := trace.NewTracerProvider(
-		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(samplingRatio))),
-		trace.WithBatcher(exporter),
-		trace.WithSpanProcessor(trace.NewBatchSpanProcessor(exporter)),
-		trace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.DBSystemMySQL,
-			semconv.TelemetrySDKLanguageGo,
-			semconv.TelemetrySDKNameKey.String("open-telemetry"),
-			semconv.MessagingProtocolKey.String("AMQP"),
-			semconv.ServiceNameKey.String(serviceName),
-		)),
+		mergedOptions.TracerProviderOptions...
 	)
 
 	otel.SetTracerProvider(provider)

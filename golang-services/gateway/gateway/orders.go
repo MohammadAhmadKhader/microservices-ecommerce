@@ -3,9 +3,11 @@ package gateway
 import (
 	"context"
 	"log"
-	
+
 	"ms/common/discovery"
 	pb "ms/common/generated"
+
+	"google.golang.org/grpc"
 )
 
 type OrdersGateway struct {
@@ -20,7 +22,7 @@ func NewOrdersGateway(registry *discovery.Registry) *OrdersGateway {
 	}
 }
 
-func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
+func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest, opts ...grpc.CallOption) (*pb.CreateOrderResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
 	if err != nil {
 		log.Println(err)
@@ -28,7 +30,7 @@ func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequ
 	}
 
 	ordersClient := pb.NewOrderServiceClient(conn)
-	validationResponse, err := ordersClient.CreateOrder(ctx, req)
+	validationResponse, err := ordersClient.CreateOrder(ctx, req, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -37,7 +39,7 @@ func (o *OrdersGateway) CreateOrder(ctx context.Context, req *pb.CreateOrderRequ
 	return validationResponse, err
 }
 
-func (o *OrdersGateway) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+func (o *OrdersGateway) GetOrders(ctx context.Context, req *pb.GetOrdersRequest, opts ...grpc.CallOption) (*pb.GetOrdersResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
 	if err != nil {
 		log.Println(err)
@@ -45,7 +47,7 @@ func (o *OrdersGateway) GetOrders(ctx context.Context, req *pb.GetOrdersRequest)
 	}
 
 	ordersClient := pb.NewOrderServiceClient(conn)
-	validationResponse, err := ordersClient.GetOrders(ctx, req)
+	validationResponse, err := ordersClient.GetOrders(ctx, req, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -54,7 +56,7 @@ func (o *OrdersGateway) GetOrders(ctx context.Context, req *pb.GetOrdersRequest)
 	return validationResponse, err
 }
 
-func (o *OrdersGateway) GetOrderById(ctx context.Context, req *pb.GetOrderByIdRequest) (*pb.GetOrderByIdResponse, error) {
+func (o *OrdersGateway) GetOrderById(ctx context.Context, req *pb.GetOrderByIdRequest, opts ...grpc.CallOption) (*pb.GetOrderByIdResponse, error) {
 	conn, err:=discovery.ConnectService(ctx, ordersService, o.registry)
 	if err != nil {
 		log.Println(err)
@@ -62,7 +64,7 @@ func (o *OrdersGateway) GetOrderById(ctx context.Context, req *pb.GetOrderByIdRe
 	}
 
 	ordersClient := pb.NewOrderServiceClient(conn)
-	validationResponse, err := ordersClient.GetOrderById(ctx, req)
+	validationResponse, err := ordersClient.GetOrderById(ctx, req, opts...)
 	if err != nil {
 		log.Println(err)
 		return nil, err

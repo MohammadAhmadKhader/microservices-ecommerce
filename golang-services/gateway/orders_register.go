@@ -4,7 +4,7 @@ import (
 	"ms/common"
 	pb "ms/common/generated"
 	"ms/gateway/middlewares"
-	"ms/orders/utils"
+	"ms/gateway/shared"
 	"net/http"
 
 	orderTypes "ms/gateway/types/orders"
@@ -14,7 +14,7 @@ import (
 )
 
 type CreateOrderPayload struct {
-	Items []*pb.Item `json:"items"`
+	OrderItems []*pb.OrderItem `json:"orderItems"`
 }
 
 func(h *handler) ordersRegister(mux *http.ServeMux) {
@@ -30,36 +30,27 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(ctx, "HandleCreateOrder Gateway")
 	defer span.End()
 
-	var itemsObj CreateOrderPayload
-	if err := common.ReadJSON(r, &itemsObj); err != nil {
-		utils.HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	userId, err := common.ExtractUserID(ctx)
+	if err != nil {
+		shared.HandleSpanErr(&span, err)
+		common.WriteError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	userId, err := GetUserIdPayloadFromCtx(ctx)
-	if err != nil {
-		utils.HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusForbidden, err.Error())
-		return
-	}
 	span.SetAttributes(attribute.Int("session.userId", int(userId)))
 
-	order, err := h.ordersGateway.CreateOrder(ctx, &pb.CreateOrderRequest{
-		UserId: int32(userId),
-		Items:  itemsObj.Items,
-	})
+	res, err := h.ordersGateway.CreateOrder(ctx, &pb.CreateOrderRequest{})
 
 	rStatus := status.Convert(err)
 	if rStatus != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
-	span.SetAttributes(attribute.Stringer("response.order", order))
+	span.SetAttributes(attribute.Stringer("response.order", res.Order))
 
-	common.WriteJSON(w, http.StatusOK, map[string]any{"order": order})
+	common.WriteJSON(w, http.StatusOK, map[string]any{"order": orderTypes.ConvertProtoOrderToOrder(res.Order)})
 }
 
 func (h *handler) HandleGettingOrders(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +59,7 @@ func (h *handler) HandleGettingOrders(w http.ResponseWriter, r *http.Request) {
 	
 	page, limit, err := common.GetPagination(r);
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -80,7 +71,7 @@ func (h *handler) HandleGettingOrders(w http.ResponseWriter, r *http.Request) {
 
 	rStatus := status.Convert(err)
 	if rStatus != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
@@ -96,7 +87,7 @@ func (h *handler) HandlerGetOrderById(w http.ResponseWriter, r *http.Request) {
 	
 	orderId, err := GetPathValueAsInt(r, "orderId")
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -107,7 +98,7 @@ func (h *handler) HandlerGetOrderById(w http.ResponseWriter, r *http.Request) {
 
 	rStatus := status.Convert(err)
 	if rStatus != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}

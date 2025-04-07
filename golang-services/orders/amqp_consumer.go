@@ -51,7 +51,7 @@ func (c *Consumer) Consume(channel *amqp.Channel) {
 	go func() {
 		for delivery := range messages {
 			log.Println("received message: ", string(delivery.Body))
-			
+
 			switch (delivery.RoutingKey) {
 			case string(broker.RK_ProductStockReservedFailed):
 				var messageBody = ProductsStockFailed{}

@@ -31,6 +31,7 @@ type ProductsStockFailedOI = []struct{
 	Quantity int `json:"quantity"`
 	ProductId int `json:"productId"`
 }
+
 type ProductsStockFailed struct {
 	OrderId int `json:"id"`
 	UserId int `json:"userId"`

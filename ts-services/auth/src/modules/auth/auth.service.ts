@@ -13,6 +13,7 @@ import { v4 as uuid } from "uuid"
 import { ConfigService } from '@nestjs/config';
 import { INJECTION_TOKEN, ServiceConfig } from '@src/config/config';
 import { UsersService } from '../users/users.service';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 
 @Injectable()
 export class AuthService {
@@ -48,11 +49,12 @@ export class AuthService {
     span.addEvent("comparing passwords ended")
 
     const redisService = await this.getRedisService()
-    const session = this.generateSession(user.id)
-    const createSessionResponse = await handleObservable(redisService.CreateSession(session))
+    const createSessionRequest = this.generateCreateSessionRequest(user.id)
+    const createSessionResponse = await handleObservable(redisService.CreateSession(createSessionRequest))
     if(!createSessionResponse.success) {
       throw new RpcInternalException("an error has occured during attempt to create the session")
     }
+
     return { user, session: createSessionResponse.session};
   }
 
@@ -85,9 +87,9 @@ export class AuthService {
     }
     
     const redisService = await this.getRedisService()
-    const session = this.generateSession(createdUser.id)
+    const createSessionRequest = this.generateCreateSessionRequest(createdUser.id)
 
-    const createSessionResponse = await handleObservable(redisService.CreateSession(session))
+    const createSessionResponse = await handleObservable(redisService.CreateSession(createSessionRequest))
     if (!createSessionResponse.success) {
       throw new RpcInternalException(createSessionResponse.message)
     }
@@ -130,7 +132,7 @@ export class AuthService {
     return {};
   }
 
-  async validateSession({sessionId}: ValidateSessionDto) {
+  async validateSession({sessionId}: ValidateSessionDto, metadata: Metadata, call: ServerUnaryCall<any,any>) {
     const span = trace.getActiveSpan()
     
     const redisService = await this.getRedisService()
@@ -143,10 +145,16 @@ export class AuthService {
       throw new RpcUnauthorizedException(errMsg)
     }
 
-    const findOneUserResponse = await this.usersService.findOneById({id:validateSessionResponse.session.userId})
+    const findOneUserResponse = await this.usersService.findOneByIdWithDetails({id:validateSessionResponse.session.userId})
     if (!findOneUserResponse.user) {
       return { sessionId: "", user: null}
     }
+
+    metadata.add("user-id", `${findOneUserResponse.user.id}`)
+    metadata.add("user-roles", JSON.stringify(findOneUserResponse.user.toProtoWithDetails().roles) || "[]")
+    metadata.add("user-email", findOneUserResponse.user.email)
+    metadata.add("session-id", validateSessionResponse.session.id)
+    call.sendMetadata(metadata)
 
     return { sessionId: validateSessionResponse.session.id, user: findOneUserResponse.user}
   }
@@ -157,7 +165,7 @@ export class AuthService {
     return getRedisGrpcService(redisGrpcAddr).getService()
   }
 
-  private generateSession(userId: number): CreateSessionRequest {
+  private generateCreateSessionRequest(userId: number): CreateSessionRequest {
     const sessionId = uuid()
     
     return {

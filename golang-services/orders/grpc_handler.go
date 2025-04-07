@@ -9,9 +9,9 @@ import (
 	"ms/common/broker"
 	pb "ms/common/generated"
 	"ms/orders/models"
+	"ms/orders/utils"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 )
@@ -61,7 +61,6 @@ func (h *grpcHandler) GetOrderById(ctx context.Context, orderReq *pb.GetOrderByI
 }
 
 func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
-	tracer := otel.Tracer("CreateOrder GrpcHandler")
 	ctx, span := tracer.Start(ctx, "CreateOrder GrpcHandler")
 	defer span.End()
 
@@ -72,12 +71,35 @@ func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderR
 
 	orderResp := &pb.CreateOrderResponse{Order: order}
 
+	marshalledOrder, err := json.Marshal(order)
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		log.Println(err)
+		return nil, common.ErrInternal()
+	}
+
+	err = h.amqpChan.PublishWithContext(ctx, string(broker.OrdersExchange), string(broker.RK_OrderCreated), 
+	false, false, amqp.Publishing{
+		ContentType:  "application/json",
+		Body:         marshalledOrder,
+		DeliveryMode: amqp.Persistent,
+	})
+	if err != nil {
+		utils.HandleSpanErr(&span, err)
+		log.Println(err)
+		return nil, common.CheckGrpcErrorOrInternal(err)
+	}
+
 	return orderResp, nil
 }
 
 func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.UpdateOrderStatusRequest) (*pb.UpdateOrderStatusResponse, error) {
+	ctx, span := tracer.Start(ctx, "UpdateOrderStatus GrpcHandler")
+	defer span.End()
+
 	order, err := h.service.UpdateOrderStatus(ctx, orderReq)
 	if err != nil {
+		utils.HandleSpanErr(&span, err)
 		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
@@ -90,10 +112,10 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 	if order.Status == pb.Status_Completed {
 		var orderItems []models.OrderItem
-		for _, item := range order.Items {
+		for _, orderItem := range order.OrderItems {
 			orderItems = append(orderItems, models.OrderItem{
-				Quantity:  int(item.Quantity),
-				ProductID: int(item.ID),
+				Quantity:  int(orderItem.Quantity),
+				ProductID: int(orderItem.ID),
 			})
 
 			sentOrder.OrderItems = orderItems
@@ -102,6 +124,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 	marshalledOrder, err := json.Marshal(sentOrder)
 	if err != nil {
+		utils.HandleSpanErr(&span, err)
 		log.Println(err)
 		return nil, common.ErrInternal()
 	}
@@ -116,6 +139,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 		})
 
 		if err != nil {
+			utils.HandleSpanErr(&span, err)
 			log.Println(err)
 			return nil, common.CheckGrpcErrorOrInternal(err)
 		}

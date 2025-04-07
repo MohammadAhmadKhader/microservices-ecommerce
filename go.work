@@ -6,4 +6,5 @@ use (
 	./golang-services/common
 	./golang-services/gateway
 	./golang-services/orders
+	./golang-services/carts
 )

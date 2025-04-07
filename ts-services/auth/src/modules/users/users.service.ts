@@ -1,5 +1,5 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import {RpcAlreadyExistsException, RpcNotFoundException} from "@ms/common/rpcExceprions"
@@ -7,10 +7,16 @@ import { DeleteUserDto } from './dto/delete-user.dto';
 import { FindAllDto } from './dto/findAll-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from './entities/userRole.entity';
+import { Role } from '../roles/entities/role.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private usersRepository: Repository<User>){}
+  private defaultRoleId: number | undefined
+  constructor(
+    @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectDataSource() private readonly dataSource: DataSource
+  ){}
 
   async create(createDto: CreateUserDto) {
     const lowerCaseEmail = createDto.email.toLowerCase()
@@ -19,15 +25,54 @@ export class UsersService {
       throw new RpcAlreadyExistsException("User with this email already exist")
     }
 
-    const createdUser = this.usersRepository.create({...createDto, email: lowerCaseEmail})
-    const operationType: UserOperations = "USER_CREATION"
-    const user = await this.usersRepository.save(createdUser, {
-      data:{
-        operationType
+    let returnedUser: User
+    await this.dataSource.transaction(async (manager) => {
+      const managerUsersRepository = manager.getRepository(User)
+      const managerUserRolesRepository = manager.getRepository(UserRole)
+      const rolesRepository = manager.getRepository(Role)
+
+      if(!this.defaultRoleId) {
+        const defaultUserRole = await rolesRepository.findOne({
+          where:{
+            name:"User"
+          }
+        })
+
+        this.defaultRoleId = defaultUserRole.id
+      }
+
+      const createdUser = managerUsersRepository.create({...createDto, email: lowerCaseEmail})
+      const operationType: UserOperations = "USER_CREATION"
+      const user = await managerUsersRepository.save(createdUser, {
+        data:{
+          operationType
+        },
+      })
+
+      await managerUserRolesRepository.save({
+        roleId: this.defaultRoleId,
+        userId: user.id
+      })
+
+      returnedUser = await managerUsersRepository.findOne({
+          where: {id: user.id},
+          relations:{
+            userRoles:{
+              role: {
+                rolePermissions: {
+                  permission: true
+                }
+              }
+            }
+          }
+      })
+
+      if(!returnedUser) {
+        throw new Error("an error has occured during transaction")
       }
     })
 
-    return { user };
+    return { user: returnedUser };
   }
 
   async findAll({page, limit}: FindAllDto) {
@@ -66,11 +111,28 @@ export class UsersService {
     return { user }
   }
 
-  async findOneByEmailWithDetails({email}) {
+  async findOneByEmailWithDetails({email}:{email: string}) {
     const user = await this.usersRepository.findOne(
       {
         where: {
           email
+        },
+        relations:[
+          "userRoles", 
+          "userRoles.role",
+          "userRoles.role.rolePermissions" ,
+          "userRoles.role.rolePermissions.permission"]
+        }
+    );
+
+    return { user }
+  }
+
+  async findOneByIdWithDetails({id}:{id: number}) {
+    const user = await this.usersRepository.findOne(
+      {
+        where: {
+          id
         },
         relations:[
           "userRoles", 

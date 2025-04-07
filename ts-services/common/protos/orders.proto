@@ -14,20 +14,18 @@ message Order {
     int32 ID = 1;
     int32 UserId = 2;
     Status Status = 3;
-    repeated Item Items = 4;
+    repeated OrderItem OrderItems = 4;
     float TotalPrice = 5;
 }
 
-message Item {
+message OrderItem {
     int32 ID = 1;
     int32 Quantity = 2;
     float UnitPrice = 3;
+    int32 ProductId = 4;
 }
 
-message CreateOrderRequest {
-    int32 UserId = 1;
-    repeated Item Items = 2;
-}
+message CreateOrderRequest {}
 
 message CreateOrderResponse {
     Order Order = 1;

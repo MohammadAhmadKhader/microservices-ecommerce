@@ -6,24 +6,23 @@ import (
 
 	"ms/common"
 	pb "ms/common/generated"
+	"ms/gateway/middlewares"
+	"ms/gateway/shared"
 	productsTypes "ms/gateway/types/products"
-	"ms/orders/utils"
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc/status"
 )
 
 func (h *handler) productsRegister(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/test", h.Test)
-	mux.HandleFunc("GET /api/products", h.HandleGettingAllProducts)
-	mux.HandleFunc("GET /api/products/{id}", h.HandleGettingProductById)
-	mux.HandleFunc("POST /api/products", h.HandleCreateProduct)
-	mux.HandleFunc("PUT /api/products/{id}", h.HandleUpdateProduct)
-	mux.HandleFunc("DELETE /api/products/{id}", h.HandleDeleteOneProduct)
-}
+	Authenticate := middlewares.Authenticate
 
-func (h *handler) Test(w http.ResponseWriter, r *http.Request) {
-	common.WriteJSON(w, http.StatusOK, map[string]any{"message":"test success"})
+	mux.HandleFunc("GET /api/products",h.HandleGettingAllProducts)
+	mux.HandleFunc("GET /api/products/{id}", h.HandleGettingProductById)
+	mux.HandleFunc("POST /api/products", Authenticate(h.authGateway, tracer, pb.PermissionType_DASHBOARD_PRODUCT_CREATE)(h.HandleCreateProduct))
+	mux.HandleFunc("PUT /api/products/{id}", Authenticate(h.authGateway, tracer, pb.PermissionType_DASHBOARD_PRODUCT_UPDATE)(h.HandleUpdateProduct))
+	mux.HandleFunc("DELETE /api/products/{id}",  Authenticate(h.authGateway, tracer, pb.PermissionType_DASHBOARD_PRODUCT_DELETE)(h.HandleDeleteOneProduct))
 }
 
 func (h *handler) HandleGettingAllProducts(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +31,7 @@ func (h *handler) HandleGettingAllProducts(w http.ResponseWriter, r *http.Reques
 	
 	page, limit, err := common.GetPagination(r)
 	if err != nil {
-		HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -42,9 +41,10 @@ func (h *handler) HandleGettingAllProducts(w http.ResponseWriter, r *http.Reques
 		Limit: limit,
 	})
 	
-	if err != nil {
-		HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		shared.HandleSpanErr(&span, err)
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
@@ -92,16 +92,17 @@ func (h *handler) HandleCreateProduct(w http.ResponseWriter, r *http.Request) {
 	var createPayload pb.CreateProductRequest
 	err := common.ReadJSON(r, &createPayload)
 	if err != nil {
-		HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	span.SetAttributes(attribute.Stringer("payload", &createPayload))
 	
 	resp, err := h.productsGateway.Create(ctx, &createPayload)
-	if err != nil {
-		HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		shared.HandleSpanErr(&span, err)
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
@@ -115,7 +116,7 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	productId, err := GetPathValueAsInt(r, "id")
 	if err != nil {
 		errStr := fmt.Sprintf("invalid product id received: '%v'", productId)
-		utils.HandleSpanErr(&span, errors.New(errStr))
+		shared.HandleSpanErr(&span, errors.New(errStr))
 		common.WriteError(w, http.StatusBadRequest, errStr)
 		return
 	}
@@ -124,7 +125,7 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var updateProduct pb.UpdateProductRequest
 	err = common.ReadJSON(r, &updateProduct)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -140,9 +141,10 @@ func (h *handler) HandleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Stringer("payload", payload))
 	
 	resp, err := h.productsGateway.Update(ctx, payload)
-	if err != nil {
-		utils.HandleSpanErr(&span, err)
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		shared.HandleSpanErr(&span, err)
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
@@ -156,15 +158,17 @@ func (h *handler) HandleDeleteOneProduct(w http.ResponseWriter, r *http.Request)
 	productId, err := GetPathValueAsInt(r, "id")
 	if err != nil {
 		errStr := fmt.Sprintf("invalid product id received: '%v'", productId)
-		utils.HandleSpanErr(&span, errors.New(errStr))
+		shared.HandleSpanErr(&span, errors.New(errStr))
 		common.WriteError(w, http.StatusBadRequest, errStr)
 		return
 	}
 	span.SetAttributes(attribute.Int("product.id", productId))
 	
 	_, err = h.productsGateway.DeleteOne(ctx, &pb.DeleteOneProductRequest{Id: int32(productId)})
-	if err != nil {
-		common.WriteError(w, http.StatusBadRequest, err.Error())
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		shared.HandleSpanErr(&span, err)
+		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 

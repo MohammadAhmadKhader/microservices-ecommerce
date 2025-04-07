@@ -14,3 +14,4 @@ generate:
 	../../protos/orders.proto \
 	../../protos/roles.proto \
 	../../protos/permissions.proto \
+	../../protos/carts.proto \

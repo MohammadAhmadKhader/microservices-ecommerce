@@ -15,6 +15,7 @@ type Queue string
 
 const (
 	OrdersQueue Queue = "orders_queue"
+	CartsQueue Queue = "carts_queue"
 	ProductsQueue Queue = "products_queue"
 	ProductsDLQ Queue = "products_dlq"
 	MainQueue Queue = "main_queue"

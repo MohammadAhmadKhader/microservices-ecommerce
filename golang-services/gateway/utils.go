@@ -2,20 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"ms/gateway/middlewares"
-	"ms/gateway/types/sessions"
+	pb "ms/common/generated"
+
 	"net/http"
 	"strconv"
 
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 )
-
-func HandleSpanErr(span *trace.Span, err error) {
-	(*span).SetStatus(codes.Error, err.Error())
-	(*span).RecordError(err)
-}
 
 func GetPathValueAsInt(r *http.Request, name string) (int, error) {
 	idStr := r.PathValue(name)
@@ -31,20 +26,35 @@ func GetPathValueAsInt(r *http.Request, name string) (int, error) {
 	return id, nil
 }
 
-func GetUserPayloadFromCtx(ctx context.Context) (sessions.UserPayload, error) {
-	val := ctx.Value(middlewares.User).(sessions.UserPayload)
-	if val == nil {
-		return nil, fmt.Errorf("permissioned denied",)
-	}
-
-	return val, nil
-}
-
-func GetUserIdPayloadFromCtx(ctx context.Context) (int32, error) {
-	userPayload , err:= GetUserPayloadFromCtx(ctx)
+func InjectMetadata(ctx context.Context, userId int32, email string, userRoles []*pb.Role) (context.Context) {
+	rolesBytes, err := json.Marshal(userRoles)
 	if err != nil {
-
+		rolesBytes = []byte("[]")
 	}
-
-	return userPayload.GetUser().GetID(), nil
+	
+	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
+		"user-id", strconv.Itoa(int(userId)),
+		"user-email", email,
+		"user-roles", string(rolesBytes),
+	))
 }
+
+
+// TODO: will be refactored lately with an interface
+// func GetUserPayloadFromCtx(ctx context.Context) (sessions.User, error) {
+// 	val := ctx.Value(middlewares.User).(sessions.User)
+// 	if val == nil {
+// 		return nil, fmt.Errorf("permissioned denied")
+// 	}
+
+// 	return val, nil
+// }
+
+// func GetUserIdPayloadFromCtx(ctx context.Context) (int32, error) {
+// 	userPayload , err:= GetUserPayloadFromCtx(ctx)
+// 	if err != nil {
+
+// 	}
+
+// 	return userPayload.GetID(), nil
+// }

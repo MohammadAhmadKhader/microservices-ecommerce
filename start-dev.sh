@@ -11,4 +11,5 @@ start bash -c "run-prometheus.bat"
 (cd $BASE_DIR/ts-services/users && bash -c "make run-dev") &
 (cd $BASE_DIR/golang-services/gateway && bash -c "make run-dev") &
 (cd $BASE_DIR/golang-services/orders && bash -c "make run-dev") &
+(cd $BASE_DIR/golang-services/carts && bash -c "make run-dev") &
 wait

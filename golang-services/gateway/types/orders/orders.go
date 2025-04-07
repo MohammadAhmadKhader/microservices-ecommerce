@@ -17,6 +17,7 @@ type OrderItem struct {
 	ID int32 `json:"id"`
 	Quantity int32 `json:"quantity"`
 	UnitPrice float32 `json:"unitPrice"` 
+	ProductId int32 `json:"productId"`
 }
 
 func (o *Order) String() string {
@@ -38,7 +39,7 @@ func (o *Order) String() string {
 
 func ConvertProtoOrderToOrder(protoOrder *pb.Order) *Order {
 	var orderItems = make([]*OrderItem, 0)
-	for _, oi := range protoOrder.Items {
+	for _, oi := range protoOrder.OrderItems {
 		orderItems = append(orderItems, ConvertProtoOrderItemToOrderItem(oi)) 
 	}
 
@@ -53,11 +54,12 @@ func ConvertProtoOrderToOrder(protoOrder *pb.Order) *Order {
 	return &order
 }
 
-func ConvertProtoOrderItemToOrderItem(pbOrderItem *pb.Item) *OrderItem {
+func ConvertProtoOrderItemToOrderItem(pbOrderItem *pb.OrderItem) *OrderItem {
 	orderItem := &OrderItem{
 		ID: pbOrderItem.GetID(),
 		UnitPrice: pbOrderItem.GetUnitPrice(),
 		Quantity: pbOrderItem.GetQuantity(),
+		ProductId: pbOrderItem.GetProductId(),
 	}
 	
 	return orderItem

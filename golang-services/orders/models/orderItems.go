@@ -10,10 +10,11 @@ type OrderItem struct {
 	ProductID int     `json:"productId"`
 }
 
-func (oi *OrderItem) ToProto() *pb.Item {
-	return &pb.Item{
+func (oi *OrderItem) ToProto() *pb.OrderItem {
+	return &pb.OrderItem{
 		ID:        int32(oi.ID),
 		Quantity:  int32(oi.Quantity),
 		UnitPrice: oi.UnitPrice,
+		ProductId: int32(oi.ProductID),
 	}
 }

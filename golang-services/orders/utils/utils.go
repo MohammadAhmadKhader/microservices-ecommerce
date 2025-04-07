@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"ms/common"
 	pb "ms/common/generated"
 	"slices"
 
@@ -30,18 +29,10 @@ func GetUnmatchedIds(productsIds []int32, prods []*pb.Product) (Ids string) {
 	return idsStr
 }
 
-func ValidateOrder(pb *pb.CreateOrderRequest) error {
-	if len(pb.Items) == 0 {
-		return common.ErrNoItems
-	}
-
-	return nil
-}
-
-func CollectProductsIds(pb *pb.CreateOrderRequest) []int {
-	var productsIds []int
-	for _, item := range pb.Items {
-		productsIds = append(productsIds, int(item.ID))
+func CollectProductsIds(cartItems []*pb.CartItem) []int32 {
+	var productsIds []int32
+	for _, cartItem := range cartItems {
+		productsIds = append(productsIds, cartItem.GetProductId())
 	}
 
 	return productsIds
@@ -50,4 +41,35 @@ func CollectProductsIds(pb *pb.CreateOrderRequest) []int {
 func HandleSpanErr(span *trace.Span, err error) {
 	(*span).SetStatus(codes.Error, err.Error())
     (*span).RecordError(err)
+}
+
+func MapProdutsIdsToPrice(products []*pb.Product) map[int32]float32 {
+	m := make(map[int32]float32)
+	for _, prod := range products {
+		m[prod.Id] = prod.Price
+	}
+
+	return m
+}
+
+func ValidateReturnedProducts(products []*pb.Product, cartItems []*pb.CartItem) error {
+	for _, cartItem := range cartItems {
+		isCartItemFound := false
+		for _, prod := range products {
+			if prod == nil {
+				return fmt.Errorf("one of the products was not found")
+			}
+
+			if cartItem.ProductId == prod.Id {
+				isCartItemFound = true
+				break;
+			}
+		}
+
+		if !isCartItemFound {
+			return fmt.Errorf("missing one of the products with id: '%v'", cartItem.GetProductId())
+		}
+	}
+
+	return nil
 }

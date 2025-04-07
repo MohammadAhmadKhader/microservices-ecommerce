@@ -8,8 +8,9 @@ import { ValidateGrpcPayload } from "@ms/common/decorators"
 import { RegisterDto } from './dto/register-dto';
 import { ResetPasswordDto } from './dto/reset-password-dto';
 import { ValidateSessionDto } from './dto/validate-session-dto';
-import { AuthServiceServiceName, ValidateSessionResponse,LoginResponse, RegistResponse, AuthUser} from '@ms/common/generated/auth';
+import { AuthServiceServiceName, ValidateSessionResponse,LoginResponse, RegistResponse} from '@ms/common/generated/auth';
 import { EmptyBody } from '@ms/common/generated/shared';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 
 export const AuthServiceName = AuthServiceServiceName.split(".")[1]
 
@@ -49,8 +50,8 @@ export class AuthController {
   @GrpcMethod(AuthServiceName, "ValidateSession")
   @ValidateGrpcPayload(ValidateSessionDto)
   @TraceMethod()
-  async ValidateSession(req: ValidateSessionDto): Promise<ValidateSessionResponse> {
-    const result = await this.authService.validateSession(req);
+  async ValidateSession(req: ValidateSessionDto, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<ValidateSessionResponse> {
+    const result = await this.authService.validateSession(req, metadata, call);
     return { ...result, user: result.user.toProtoWithDetails() }
   }
 }

@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package carts;
+option go_package = "ms/gateway/pb";
+
+import "google/protobuf/timestamp.proto";
+import "shared.proto";
+
+service CartsService {
+    rpc GetUserCart(GetCartRequest) returns(GetCartResponse);
+    rpc AddToCart(AddToCartRequest) returns(AddToCartResponse);
+    rpc RemoveFromCart(RemoveFromCartRequest) returns(shared.EmptyBody);
+    rpc ChangeCartItemQuantity(ChangeCartItemQuantityRequest) returns (shared.EmptyBody);
+    rpc ClearCart(ClearCartRequest) returns (shared.EmptyBody);
+}
+
+message Cart {
+    repeated CartItem cartItems = 1;
+}
+
+message CartItem {
+    int32 id = 1;
+    int32 productId = 2;
+    int32 quantity = 3;
+    int32 userId = 4;
+    google.protobuf.Timestamp createdAt = 5;
+}
+
+message GetCartRequest {
+    // userId will come from metadata (this comment here for documentation)
+}
+
+message GetCartResponse {
+    Cart cart = 1;
+}
+
+message AddToCartRequest {
+    int32 productId = 1;
+    int32 quantity = 2;
+}
+
+message AddToCartResponse {
+    CartItem cartItem = 1;
+}
+
+message RemoveFromCartRequest {
+    int32 cartItemId = 1;
+}
+
+message ChangeCartItemQuantityRequest {
+    int32 cartItemId = 1;
+    Sign operation = 2;
+}
+
+enum Sign {
+    SIGN_UNKNOWN = 0;
+    PLUS = 1;
+    MINUS = 2;
+}
+
+message ClearCartRequest {}

@@ -37,12 +37,13 @@ type Order struct {
 }
 
 func (o *Order) ToProto() *pb.Order {
-	var orderItems = []*pb.Item{}
+	var orderItems = []*pb.OrderItem{}
 	for i := 0; i < len(o.OrderItems); i++ {
-		orderItems = append(orderItems, &pb.Item{
+		orderItems = append(orderItems, &pb.OrderItem{
 			ID:        int32(o.OrderItems[i].ID),
 			Quantity:  int32(o.OrderItems[i].Quantity),
 			UnitPrice: o.OrderItems[i].UnitPrice,
+			ProductId: int32(o.OrderItems[i].ProductID),
 		})
 	}
 
@@ -54,7 +55,7 @@ func (o *Order) ToProto() *pb.Order {
 	return &pb.Order{
 		ID:         int32(o.ID),
 		Status:     pb.Status(orderStatus),
-		Items:      orderItems,
+		OrderItems:      orderItems,
 		UserId:     int32(o.UserID),
 		TotalPrice: o.TotalPrice,
 	}

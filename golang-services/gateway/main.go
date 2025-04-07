@@ -47,9 +47,10 @@ func main() {
 	ordersGateway := gateway.NewOrdersGateway(registry)
 	productsGateway := gateway.NewProductsGateway(registry)
 	authGateway := gateway.NewAuthGateway(registry)
+	cartsGateway := gateway.NewCartsGateway(registry)
 
 	mux := http.NewServeMux()
-	handler := NewHandler(ordersGateway, productsGateway, authGateway)
+	handler := NewHandler(ordersGateway, productsGateway, authGateway, cartsGateway)
 	handler.registerRoutes(mux)
 
 	common.HttpInitMetrics(mux, serviceHost, metricsPort)
