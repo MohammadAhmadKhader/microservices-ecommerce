@@ -5,7 +5,7 @@ import (
 	"errors"
 	"ms/common"
 	"ms/orders/models"
-	"ms/orders/utils"
+	"ms/orders/shared"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
@@ -25,7 +25,7 @@ func (s *store) Create(ctx context.Context, order *models.Order) (*models.Order,
 
 	err := s.DB.WithContext(ctx).Create(order).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (s *store) GetOnePopulatedOrder(ctx context.Context, Id int) (*models.Order
 	var order models.Order
 	err := s.DB.WithContext(ctx).Preload("OrderItems").First(&order, Id).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, common.ErrNotFound("order", Id)
 		}
@@ -67,7 +67,7 @@ func (s *store) GetOne(ctx context.Context, Id int) (*models.Order, error) {
 	var order models.Order
 	err := s.DB.WithContext(ctx).First(&order, Id).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, common.ErrNotFound("order", Id)
 		}
@@ -95,7 +95,7 @@ func (s *store) GetOrders(ctx context.Context, page, limit int) ([]models.Order,
 		Preload("OrderItems").
 		Find(&orders).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ func (s *store) UpdateStatus(ctx context.Context, Id int, order *models.Order) (
 
 	err := s.DB.WithContext(ctx).Where("id = ?", Id).Select("Status").Updates(order).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -130,7 +130,7 @@ func (s *store) FetchOrderItems(ctx context.Context, Id int) ([]models.OrderItem
 	var orderItems []models.OrderItem
 	err := s.DB.WithContext(ctx).Model(&orderItems).Where("orderId = ?", Id).Find(&orderItems).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -143,7 +143,7 @@ func (s *store) UpdateStatusTx(ctx context.Context, tx *gorm.DB, Id int, order *
 
 	err := tx.WithContext(ctx).Where("id = ?", Id).Select("Status").Updates(order).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -158,7 +158,7 @@ func (s *store) FetchOrderItemsTx(ctx context.Context, tx *gorm.DB, Id int) ([]m
 	var orderItems []models.OrderItem
 	err := tx.WithContext(ctx).Model(&orderItems).Where("order_id = ?", Id).Find(&orderItems).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -173,13 +173,13 @@ func (s *store) UpdateStatusAndFetchItems(ctx context.Context, Id int, order *mo
 	err := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		order, err := s.UpdateStatusTx(ctx, tx, Id, order)
 		if err != nil {
-			utils.HandleSpanErr(&span, err)
+			shared.HandleSpanErr(&span, err)
 			return err
 		}
 
 		orderItems, err := s.FetchOrderItemsTx(ctx, tx, Id)
 		if err != nil {
-			utils.HandleSpanErr(&span, err)
+			shared.HandleSpanErr(&span, err)
 			return err
 		}
 		order.OrderItems = orderItems
@@ -188,7 +188,7 @@ func (s *store) UpdateStatusAndFetchItems(ctx context.Context, Id int, order *mo
 		return nil
 	})
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 

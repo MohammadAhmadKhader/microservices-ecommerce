@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"ms/carts/models"
-	"ms/carts/utils"
+	"ms/carts/shared"
 	"ms/common"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -29,7 +29,7 @@ func (s *store) GetCart(ctx context.Context, userId uint) (*models.Cart, error) 
 		UserID: userId,
 	}).Find(&cartItems).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *store) GetCartItem(ctx context.Context, cartItemId uint, userId uint) (
 	var cartItem models.CartItem
 	err := s.DB.WithContext(ctx).Model(models.CartItem{}).First(&cartItem, cartItemId).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, common.ErrNotFound("cartItemId", cartItemId)
 		}
@@ -63,7 +63,7 @@ func (s *store) Create(ctx context.Context, cartItem *models.CartItem) (*models.
 
 	err := s.DB.WithContext(ctx).Model(models.CartItem{}).Create(&cartItem).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *store) RemoveCartItem(ctx context.Context, cartItemId uint, userId uint
 	var cartItem models.CartItem
 	err := s.DB.WithContext(ctx).Model(models.CartItem{}).Where("id = ? AND user_id = ?", cartItemId, userId).First(&cartItem).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return common.ErrNotFound("cartItemId", cartItemId)
 		}
@@ -102,7 +102,7 @@ func (s *store) ChangeCartItemQuantity(ctx context.Context, cartItemId uint, use
 	err := s.DB.WithContext(ctx).Model(models.CartItem{}).
 	Where("id = ? AND user_id = ?", cartItemId, userId).First(&cartItem).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return common.ErrNotFound("cartItemId", cartItemId)
 		}
@@ -119,14 +119,14 @@ func (s *store) ChangeCartItemQuantity(ctx context.Context, cartItemId uint, use
 	} else if cartItem.Quantity <= 1 && operation == "MINUS" {
 		var err = fmt.Errorf("cart item with id '%v' has the least allowed quantity", cartItemId)
 		span.SetAttributes(attribute.String("error.message", err.Error()))
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 
 		return err
 	}
 
 	err = s.DB.WithContext(ctx).Where("id = ? AND user_id = ?", cartItemId, userId).Model(models.CartItem{}).Save(&cartItem).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return err
 	}
 
@@ -140,13 +140,13 @@ func (s *store) ClearCart(ctx context.Context,userId uint) (error) {
 	var cartItems []models.CartItem
 	err := s.DB.WithContext(ctx).Model(models.CartItem{}).Where("user_id = ?", userId).Find(&cartItems).Error
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return err
 	}
 
 	if len(cartItems) == 0 {
 		err := fmt.Errorf("user cart already empty")
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return err
 	}
 

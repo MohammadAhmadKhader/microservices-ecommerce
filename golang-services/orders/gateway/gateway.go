@@ -8,7 +8,7 @@ import (
 	"ms/common"
 	"ms/common/discovery"
 	pb "ms/common/generated"
-	"ms/orders/utils"
+	"ms/orders/shared"
 
 	"google.golang.org/grpc"
 )
@@ -40,7 +40,7 @@ func (g *Gateway) GetProductsFromIds(ctx context.Context, productsIds []int32, o
 	}
 
 	if len(resp.Products) != len(productsIds) {
-		idsStr := utils.GetUnmatchedIds(productsIds, resp.Products)
+		idsStr := shared.GetUnmatchedIds(productsIds, resp.Products)
 		log.Printf("order was not able to be created, products with the following ids: '%s' were not found\n", idsStr)
 
 		return nil, common.ErrInternal()

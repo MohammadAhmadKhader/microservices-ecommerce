@@ -6,14 +6,14 @@ import (
 	"ms/common"
 	"ms/common/broker"
 	"ms/common/discovery"
-	"ms/orders/gateway"
 	"ms/orders/cli"
+	"ms/orders/gateway"
+	"ms/orders/shared"
 	"net"
 	"os"
 	"slices"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/rs/zerolog"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 
@@ -21,22 +21,16 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	serviceName   = "orders"
-	serviceHost      = common.EnvString("SERVICE_HOST", "127.0.0.2")
-	metricsPort      = common.EnvString("METRICS_PORT", "127.0.0.2")
-	servicePort      = common.EnvString("SERVICE_PORT", "3001")
-	serviceAddr  	 = serviceHost+":"+servicePort
-	telemetryHost    = common.EnvString("TELEMETRY_HOST", "localhost")
-	telemetryPort	 = common.EnvString("TELEMETRY_PORT", "4318")
-	telemetryAddr    = telemetryHost+":"+telemetryPort
-	logstashHost     = common.EnvString("LOGSTASH_HOST", "localhost")
-	logstashPort     = common.EnvString("LOGSTASH_PORT", "5000")
-	logstashAddr 	 = logstashHost+":"+logstashPort
-)
 
-var tracer trace.Tracer
-var serviceLogger *zerolog.Logger
+var (
+	serviceName      = shared.ServiceName
+	serviceAddr  	 = shared.ServiceAddr
+	serviceHost 	 = shared.ServiceHost
+	metricsPort      = shared.MetricsPort
+	// we will use global tracer, incase we need to inject it for mock testing inside stores, servce and etc we can do easily later
+
+	tracer trace.Tracer = shared.Tracer
+)
 
 func main() {
 	if slices.Contains(os.Args, "seed") {
@@ -46,13 +40,11 @@ func main() {
 	}
 
 	ctx := context.Background()
-	tracerProvider, err := common.InitTracer(ctx, telemetryAddr, serviceName)
+	tracerProvider, err := shared.InitTracer(ctx)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	defer tracerProvider.Shutdown(ctx)
-	serviceTracer := tracerProvider.Tracer(serviceName)
-	tracer = serviceTracer
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -85,9 +77,7 @@ func main() {
 	defer registry.Deregister(ctx, instanceId)
 
 	gateway := gateway.NewGateway(registry)
-
-	logger := common.NewServiceLogger(logstashAddr, serviceName)
-	serviceLogger = logger
+	logger := shared.InitLogger()
 
 	DB := InitDB(logger)
 	store := NewStore(DB)

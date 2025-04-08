@@ -5,7 +5,7 @@ import (
 	pb "ms/common/generated"
 	"ms/gateway/cookie"
 	usersTypes "ms/gateway/types/users"
-	"ms/orders/utils"
+	"ms/gateway/shared"
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -25,14 +25,14 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginPayload pb.LoginRequest
 	err := common.ReadJSON(r, &loginPayload)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	copyLoginPayload, err := common.CopyProto(&loginPayload)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -43,14 +43,14 @@ func (h *handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	loginResponse, err := h.authGateway.Login(ctx, &loginPayload)
 	rStatus := status.Convert(err)
 	if rStatus != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
 	}
 
 	_, err = cookie.SetCookie(w, r, loginResponse.GetSession())
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -67,14 +67,14 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 	var registPayload pb.RegistRequest
 	err := common.ReadJSON(r, &registPayload)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	registPayloadClone, err := common.CopyProto(&registPayload)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -84,7 +84,7 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 
 	loginResponse, err := h.authGateway.Register(ctx, &registPayload)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		rStatus := status.Convert(err)
 		common.HandleGrpcErr(err, rStatus, w, nil)
 		return
@@ -92,7 +92,7 @@ func (h *handler) HandleRegist(w http.ResponseWriter, r *http.Request) {
 
 	_, err = cookie.SetCookie(w, r, loginResponse.GetSession())
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

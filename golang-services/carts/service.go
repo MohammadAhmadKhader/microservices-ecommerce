@@ -6,7 +6,7 @@ import (
 
 	"ms/carts/gateway"
 	"ms/carts/models"
-	"ms/carts/utils"
+	"ms/carts/shared"
 	"ms/common"
 	pb "ms/common/generated"
 
@@ -32,14 +32,14 @@ func (s *service) GetUserCart(ctx context.Context, p *pb.GetCartRequest) (*pb.Ca
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.SetAttributes(attribute.Int("userId", int(userId)))
 	
 	cart, err := s.store.GetCart(ctx, uint(userId))
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (s *service) AddToCart(ctx context.Context, p *pb.AddToCartRequest) (*pb.Ca
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.SetAttributes(attribute.Int("userId", int(userId)))
@@ -68,7 +68,7 @@ func (s *service) AddToCart(ctx context.Context, p *pb.AddToCartRequest) (*pb.Ca
 	product, err := s.productsGateway.GetProductById(ctx, p.GetProductId())
 	if err != nil {
 		span.SetAttributes(attribute.String("error.message", err.Error()))
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *service) AddToCart(ctx context.Context, p *pb.AddToCartRequest) (*pb.Ca
 		Quantity: uint(p.GetQuantity()),
 	})
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (s *service) RemoveFromCart(ctx context.Context, p *pb.RemoveFromCartReques
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.SetAttributes(attribute.Int("userId", int(userId)))
@@ -118,13 +118,13 @@ func (s *service) ChangeCartItemQuantity(ctx context.Context, pbReq *pb.ChangeCa
 		operation = "MINUS"
 	} else {
 		err := fmt.Errorf("invalid Operation enum type received: %v", pbReq.Operation)
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.SetAttributes(attribute.Int("userId", int(userId)))
@@ -143,7 +143,7 @@ func (s *service) ClearCart(ctx context.Context, pbReq *pb.ClearCartRequest) (*p
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.SetAttributes(attribute.Int("userId", int(userId)))

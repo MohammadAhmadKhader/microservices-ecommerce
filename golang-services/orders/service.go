@@ -8,7 +8,7 @@ import (
 	pb "ms/common/generated"
 	"ms/orders/gateway"
 	"ms/orders/models"
-	"ms/orders/utils"
+	"ms/orders/shared"
 
 	"google.golang.org/grpc/metadata"
 )
@@ -55,7 +55,7 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 	
 	md , err := common.ExtractMD(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -63,29 +63,29 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 	
 	cartRes, err := s.gateway.GetUserCart(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.AddEvent("Returned response from carts service")
 	
-	productsIds := utils.CollectProductsIds(cartRes.CartItems)
+	productsIds := shared.CollectProductsIds(cartRes.CartItems)
 
 	log.Println(productsIds,"products Id's")
 	products, err := s.gateway.GetProductsFromIds(ctx, productsIds)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 	span.AddEvent("Returned response from products service")
 	log.Println(products)
 
-	err = utils.ValidateReturnedProducts(products, cartRes.CartItems)
+	err = shared.ValidateReturnedProducts(products, cartRes.CartItems)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, common.ErrInvalidArgument(err.Error())
 	}
 
-	productsPricesMap := utils.MapProdutsIdsToPrice(products)
+	productsPricesMap := shared.MapProdutsIdsToPrice(products)
 
 	var orderItems = []models.OrderItem{}
 	var totalPrice float32 = 0
@@ -103,7 +103,7 @@ func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*p
 
 	userId, err := common.ExtractUserID(ctx)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		// we have set here internal instead of unauthenticated assuming user/customer
 		// should not have reached here without userId
 		return nil, err
@@ -146,7 +146,7 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	id := int(p.GetId())
 	order, err := s.store.GetOne(ctx, id)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, err
 	}
 
@@ -156,7 +156,7 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	if order.Status == models.Completed {
 		order, err = s.store.UpdateStatusAndFetchItems(ctx, id, order)
 		if err != nil {
-			utils.HandleSpanErr(&span, err)
+			shared.HandleSpanErr(&span, err)
 			return nil, err
 		}
 
@@ -164,7 +164,7 @@ func (s *service) UpdateOrderStatus(ctx context.Context, p *pb.UpdateOrderStatus
 	} else {
 		order, err = s.store.UpdateStatus(ctx, id, order)
 		if err != nil {
-			utils.HandleSpanErr(&span, err)
+			shared.HandleSpanErr(&span, err)
 			return nil, err
 		}
 

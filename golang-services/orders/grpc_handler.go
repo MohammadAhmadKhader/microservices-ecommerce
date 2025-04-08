@@ -9,7 +9,7 @@ import (
 	"ms/common/broker"
 	pb "ms/common/generated"
 	"ms/orders/models"
-	"ms/orders/utils"
+	"ms/orders/shared"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel/attribute"
@@ -73,7 +73,7 @@ func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderR
 
 	marshalledOrder, err := json.Marshal(order)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		log.Println(err)
 		return nil, common.ErrInternal()
 	}
@@ -85,7 +85,7 @@ func (h *grpcHandler) CreateOrder(ctx context.Context, orderReq *pb.CreateOrderR
 		DeliveryMode: amqp.Persistent,
 	})
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		log.Println(err)
 		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
@@ -99,7 +99,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 	order, err := h.service.UpdateOrderStatus(ctx, orderReq)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		return nil, common.CheckGrpcErrorOrInternal(err)
 	}
 
@@ -124,7 +124,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 
 	marshalledOrder, err := json.Marshal(sentOrder)
 	if err != nil {
-		utils.HandleSpanErr(&span, err)
+		shared.HandleSpanErr(&span, err)
 		log.Println(err)
 		return nil, common.ErrInternal()
 	}
@@ -139,7 +139,7 @@ func (h *grpcHandler) UpdateOrderStatus(ctx context.Context, orderReq *pb.Update
 		})
 
 		if err != nil {
-			utils.HandleSpanErr(&span, err)
+			shared.HandleSpanErr(&span, err)
 			log.Println(err)
 			return nil, common.CheckGrpcErrorOrInternal(err)
 		}
