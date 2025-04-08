@@ -3,17 +3,14 @@ package shared
 import "ms/common"
 
 var (
-	ServiceName   = "orders"
-	ServiceHost   = common.EnvString("SERVICE_HOST", "127.0.0.2")
-	MetricsPort   = common.EnvString("METRICS_PORT", "127.0.0.2")
-	ServicePort   = common.EnvString("SERVICE_PORT", "3001")
+	ServiceName   = "gateway"
+	MetricsPort   = common.EnvString("METRICS_PORT", "")
+	ServiceHost   = common.EnvString("SERVICE_HOST", "127.0.0.3")
+	ServicePort   = common.EnvString("SERVICE_PORT", "8080")
 	ServiceAddr   = ServiceHost + ":" + ServicePort
 	TelemetryHost = common.EnvString("TELEMETRY_HOST", "localhost")
 	TelemetryPort = common.EnvString("TELEMETRY_PORT", "4318")
 	TelemetryAddr = TelemetryHost + ":" + TelemetryPort
-	LogstashHost  = common.EnvString("LOGSTASH_HOST", "localhost")
-	LogstashPort  = common.EnvString("LOGSTASH_PORT", "5000")
-	LogstashAddr  = LogstashHost + ":" + LogstashPort
 	ConsulHost    = common.EnvString("CONSUL_HOST", "localhost")
 	ConsulPort    = common.EnvString("CONSUL_PORT", "8500")
 	ConsulAddr    = ConsulHost + ":" + ConsulPort

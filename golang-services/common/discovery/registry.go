@@ -85,14 +85,14 @@ func (r *Registry) Discover(ctx context.Context, serviceName string) ([]string, 
 	return services, nil
 }
 
-func InitRegistryAndHandleIt(ctx context.Context, serviceName, address string) (registry *Registry, instanceId string,err error) {
-	registry, err = NewRegistry("localhost:8500")
+func InitRegistryAndHandleIt(ctx context.Context, serviceName, serviceAddr, consulAddr string) (registry *Registry, instanceId string,err error) {
+	registry, err = NewRegistry(consulAddr)
 	if err != nil {
 		return nil, "",err
 	}
 
 	instanceId = GenInstanceId(serviceName)
-	err = registry.Register(ctx, instanceId, address, serviceName)
+	err = registry.Register(ctx, instanceId, serviceAddr, serviceName)
 	if err != nil {
 		return nil, "",err
 	}

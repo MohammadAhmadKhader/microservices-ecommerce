@@ -27,6 +27,7 @@ var (
 	serviceAddr  	 = shared.ServiceAddr
 	serviceHost 	 = shared.ServiceHost
 	metricsPort      = shared.MetricsPort
+	ConsulAddr 		 = shared.ConsulAddr
 	// we will use global tracer, incase we need to inject it for mock testing inside stores, servce and etc we can do easily later
 
 	tracer trace.Tracer = shared.Tracer
@@ -69,7 +70,7 @@ func main() {
 		amqpChan.Close()
 	}()
 
-	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr)
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr, ConsulAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

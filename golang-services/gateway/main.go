@@ -9,39 +9,34 @@ import (
 	"ms/common/discovery"
 
 	"ms/gateway/gateway"
+	"ms/gateway/shared"
 
 	_ "github.com/joho/godotenv/autoload"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	serviceName = "gateway"
-	metricsPort           = common.EnvString("METRICS_PORT", "")
-	serviceHost      = common.EnvString("SERVICE_HOST", "127.0.0.3")
-	servicePort      = common.EnvString("SERVICE_PORT", "8080")
-	serviceAddr  	 = serviceHost+":"+servicePort
-	telemetryHost    = common.EnvString("TELEMETRY_HOST", "localhost")
-	telemetryPort	 = common.EnvString("TELEMETRY_PORT", "4318")
-	telemetryAddr    = telemetryHost+":"+telemetryPort
-)
+	serviceName 	 = shared.ServiceName
+	metricsPort      = shared.MetricsPort
+	serviceHost      = shared.ServiceHost
+	serviceAddr  	 = shared.ServiceAddr
+	ConsulAddr 		 = shared.ConsulAddr
 
-var tracer trace.Tracer
+	tracer = shared.Tracer
+)
 
 func main() {
 	ctx := context.Background()
-	tracerProvider, err := common.InitTracer(ctx, telemetryAddr, serviceName)
+	
+	tracerProvider, err := shared.InitTracer(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer tracerProvider.Shutdown(ctx)
 
-	t := tracerProvider.Tracer(serviceName)
-	tracer = t
-
-	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr)
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr, ConsulAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer registry.Deregister(ctx, instanceId)
 	
 	ordersGateway := gateway.NewOrdersGateway(registry)

@@ -28,6 +28,8 @@ var (
 	serviceHost      = shared.ServiceHost
 	metricsPort      = shared.MetricsPort
 	serviceAddr  	 = shared.ServiceAddr
+	ConsulAddr       = shared.ConsulAddr
+	
 	tracer trace.Tracer = shared.Tracer
 )
 
@@ -72,7 +74,7 @@ func main() {
 		amqpChan.Close()
 	}()
 
-	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr)
+	registry, instanceId, err := discovery.InitRegistryAndHandleIt(ctx, serviceName, serviceAddr, ConsulAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

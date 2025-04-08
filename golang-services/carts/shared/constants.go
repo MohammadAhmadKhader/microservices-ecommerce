@@ -14,4 +14,7 @@ var (
 	LogstashHost  = common.EnvString("LOGSTASH_HOST", "localhost")
 	LogstashPort  = common.EnvString("LOGSTASH_PORT", "5000")
 	LogstashAddr  = LogstashHost + ":" + LogstashPort
+	ConsulHost    = common.EnvString("CONSUL_HOST", "localhost")
+	ConsulPort    = common.EnvString("CONSUL_PORT", "8500")
+	ConsulAddr    = ConsulHost + ":" + ConsulPort
 )
